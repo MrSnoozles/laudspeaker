@@ -17,7 +17,7 @@ import {
   setJourneySettingsTags,
   setJourneyFrequencyCappingRules,
   setJourneySettingsConversionTracking,
-  JourneySettingsConversionTrackingTimeLimitUnit
+  JourneySettingsConversionTrackingTimeLimitUnit,
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
@@ -105,7 +105,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       placeholder="Select start time"
                     />
                   </div>
-                </div> 
+                </div>
                 <div className="flex flex-col w-full">
                   <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
                     End time
@@ -387,14 +387,14 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                     dispatch(
                       setJourneySettingsConversionTracking({
                         ...journeySettings.conversionTracking!,
-                        events: events
+                        events: events,
                       })
                     );
                   }}
                 />
               </div>
               <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
-                Conversion Deadline
+                Conversion Deadline that will be there
               </div>
               <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
                 Set the maximum amount of time, that can occur between a user entering a journey and a conversion
@@ -440,7 +440,8 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       }}
                       className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                     >
-                      {Object.values(JourneySettingsConversionTrackingTimeLimitUnit).map((option) => (
+                      {Object.values(
+                        JourneySettingsConversionTrackingTimeLimitUnit).map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
@@ -451,7 +452,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
               </div>
             </div>
           )}
-          </div>
+        </div>
         {/* <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
           <div className="flex items-center">
