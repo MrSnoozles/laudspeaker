@@ -58,7 +58,7 @@ const FlowBuilderOverview = () => {
     Record<string, any>[]
   >([]);
   const [conversionDataEvents, setConversionDataEvents] = useState<string[]>(
-    [],
+    []
   );
   const [conversionDataPointsEventsCount, setConversionDataPointsEventsCount] =
     useState<number>(0);

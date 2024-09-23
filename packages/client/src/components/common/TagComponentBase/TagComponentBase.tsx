@@ -96,8 +96,8 @@ export default function TagComponentBase({
             someTagsFound
               ? "overflow-y-scroll max-h-[200px]"
               : noTagsFound
-                ? "max-w-[260px] h-[40px] items-center flex"
-                : "max-w-[260px] h-[40px] items-center flex"
+              ? "max-w-[260px] h-[40px] items-center flex"
+              : "max-w-[260px] h-[40px] items-center flex"
           } absolute transition-all rounded left-0 top-full z-[2] bg-white shadow-[0px_9px_28px_8px_rgba(0,0,0,0.05),0px_6px_16px_0px_rgba(0,0,0,0.08),0px_3px_6px_-4px_rgba(0,0,0,0.12);] w-full`}
         >
           {someTagsFound ? (
