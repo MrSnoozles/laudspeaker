@@ -106,7 +106,7 @@ export const messageEventsCorelationWaitUntil: Record<
     (el) => ({
       key: el,
       title: "is " + el,
-    })
+    }),
   ),
   [ProviderType.SMS_MESSAGE]: [
     {
@@ -122,13 +122,13 @@ export const messageEventsCorelationWaitUntil: Record<
     (el) => ({
       key: el,
       title: "is " + el,
-    })
+    }),
   ),
   [ProviderType.IN_APP_MESSAGE]: Object.values(MessageInAPPEventCondition).map(
     (el) => ({
       key: el,
       title: "is " + el,
-    })
+    }),
   ),
 };
 
@@ -494,7 +494,7 @@ export enum JourneySettingsConversionTrackingTimeLimitUnit {
 }
 
 export interface JourneySettingsConversionTrackingTimeLimit {
-  unit: JourneySettingsConversionTrackingTimeLimitUnit,
+  unit: JourneySettingsConversionTrackingTimeLimitUnit;
   value: number;
 }
 
@@ -623,7 +623,7 @@ export const defaultJourneySettings = {
       unit: JourneySettingsConversionTrackingTimeLimitUnit.Days,
       value: 3,
     },
-  }
+  },
 };
 
 const initialState: FlowBuilderState = {
@@ -663,7 +663,7 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   const children = getOutgoers(node, state.nodes, state.edges);
 
   state.edges = state.edges.filter(
-    (edge) => edge.source !== node.id && edge.target !== node.id
+    (edge) => edge.source !== node.id && edge.target !== node.id,
   );
   state.nodes.splice(nodeIndex, 1);
 
@@ -716,7 +716,7 @@ const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
     nodeIn.type === NodeType.EXPERIMENT
   ) {
     const branchEdge = state.edges.find(
-      (edge) => edge.source === nodeIn.id && edge.target === node.id
+      (edge) => edge.source === nodeIn.id && edge.target === node.id,
     );
 
     if (!branchEdge) return;
@@ -724,7 +724,7 @@ const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
     branchEdge.target = nodeOut.id;
   } else {
     state.edges = state.edges.filter(
-      (edge) => edge.source !== node.id && edge.target !== node.id
+      (edge) => edge.source !== node.id && edge.target !== node.id,
     );
     state.edges.push({
       id: `e${nodeIn.id}-${nodeOut.id}`,
@@ -753,7 +753,7 @@ const handleClearInsertNodes = (state: FlowBuilderState) => {
 
 const handleJumpToTargettingNodeChange = (
   state: FlowBuilderState,
-  payload: string | undefined
+  payload: string | undefined,
 ) => {
   state.jumpToTargettingNode = payload;
   state.isDrawerDisabled = Boolean(payload);
@@ -763,7 +763,7 @@ const handleJumpToTargettingNodeChange = (
       id: node.id,
       selected: false,
     })),
-    state.nodes
+    state.nodes,
   ).map((node) =>
     payload
       ? {
@@ -773,7 +773,7 @@ const handleJumpToTargettingNodeChange = (
             disabled: nodeTypesNotConnectableByJumpTo.includes(node.type),
           },
         }
-      : { ...node, data: { ...node.data, disabled: false } }
+      : { ...node, data: { ...node.data, disabled: false } },
   );
 };
 
@@ -795,21 +795,21 @@ const flowBuilderSlice = createSlice({
       action: PayloadAction<{
         nodes: Node<NodeData>[];
         edges: Edge<EdgeData>[];
-      }>
+      }>,
     ) {
       state.nodes = action.payload.nodes;
       state.edges = action.payload.edges;
     },
     addInsertNodeBetween(
       state,
-      action: PayloadAction<{ source: string; target: string }>
+      action: PayloadAction<{ source: string; target: string }>,
     ) {
       handleClearInsertNodes(state);
 
       const { source, target } = action.payload;
 
       const edgeBetween = state.edges.find(
-        (edge) => edge.source === source && edge.target === target
+        (edge) => edge.source === source && edge.target === target,
       );
       if (!edgeBetween) return;
 
@@ -835,14 +835,14 @@ const flowBuilderSlice = createSlice({
           type: EdgeType.PRIMARY,
           source: newNodeUUID,
           target,
-        }
+        },
       );
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
     transformEmptyNodeIntoInsertNode(state, action: PayloadAction<string>) {
       const nodeToChange = state.nodes.find(
-        (node) => node.id === action.payload
+        (node) => node.id === action.payload,
       );
 
       if (!nodeToChange || nodeToChange.type !== NodeType.EMPTY) return;
@@ -855,7 +855,7 @@ const flowBuilderSlice = createSlice({
     },
     transformInsertNodeIntoEmptyNode(state, action: PayloadAction<string>) {
       const nodeToChange = state.nodes.find(
-        (node) => node.id === action.payload
+        (node) => node.id === action.payload,
       );
 
       if (!nodeToChange || nodeToChange.type !== NodeType.INSERT_NODE) return;
@@ -869,7 +869,7 @@ const flowBuilderSlice = createSlice({
     },
     changeNodeData(
       state,
-      action: PayloadAction<{ id: string; data: NodeData }>
+      action: PayloadAction<{ id: string; data: NodeData }>,
     ) {
       const { id, data } = action.payload;
 
@@ -887,7 +887,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data.type === NodeType.EXPERIMENT)
       ) {
         const existedBranchEdges = state.edges.filter(
-          (edge) => edge.source === nodeToChange.id
+          (edge) => edge.source === nodeToChange.id,
         );
 
         if (
@@ -905,13 +905,13 @@ const flowBuilderSlice = createSlice({
             });
           } else if (nodeToChange.data.branches.some((el) => el.isOthers)) {
             const otherNodeIndex = nodeToChange.data.branches.findIndex(
-              (el) => el.isOthers
+              (el) => el.isOthers,
             );
             if (nodeToChange.data.branches.length - 1 > 0) {
               if (otherNodeIndex !== nodeToChange.data.branches.length - 1) {
                 const element = nodeToChange.data.branches.splice(
                   otherNodeIndex,
-                  1
+                  1,
                 )[0];
                 nodeToChange.data.branches.push(element);
               }
@@ -929,7 +929,7 @@ const flowBuilderSlice = createSlice({
             edge.data.type !== EdgeType.BRANCH ||
             !(nodeToChange.data.branches as Branch[]).find(
               (branch) =>
-                branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
+                branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id,
             )
           ) {
             handlePruneNodeTree(state, edge.target);
@@ -941,7 +941,7 @@ const flowBuilderSlice = createSlice({
           const existedChildrenEdge = existedBranchEdges.find(
             (edge) =>
               edge.data?.type === EdgeType.BRANCH &&
-              edge.data.branch.id === branch.id
+              edge.data.branch.id === branch.id,
           );
 
           if (!existedChildrenEdge) {
@@ -984,7 +984,7 @@ const flowBuilderSlice = createSlice({
       if (state.devModeState.status === ConnectionStatus.Connected) {
         if (
           !state.nodes.find(
-            (el) => el.id === state.devModeState.arrowPreSelectNode
+            (el) => el.id === state.devModeState.arrowPreSelectNode,
           )
         ) {
           state.devModeState.arrowPreSelectNode = undefined;
@@ -1007,13 +1007,13 @@ const flowBuilderSlice = createSlice({
     handleDevModeState(state, action: PayloadAction<DevModeStatePayload>) {
       if ("customerInNode" in action.payload) {
         const node = state.nodes.find(
-          (el) => el.id === action.payload.customerInNode
+          (el) => el.id === action.payload.customerInNode,
         );
         if (node) {
           const availableNodes = getClosestNextAndPrevious(
             node,
             state.nodes,
-            state.edges
+            state.edges,
           ).filter((el) => el.type !== NodeType.EMPTY);
 
           const start = state.nodes.find((el) => el.type === NodeType.START);
@@ -1023,7 +1023,7 @@ const flowBuilderSlice = createSlice({
           }
 
           action.payload.availableNodeToJump = availableNodes.map(
-            (el) => el.id
+            (el) => el.id,
           );
 
           state.devModeState.arrowPreSelectNode = undefined;
@@ -1043,14 +1043,14 @@ const flowBuilderSlice = createSlice({
         return;
 
       const node = state.nodes.find(
-        (el) => el.id === state.devModeState.customerInNode
+        (el) => el.id === state.devModeState.customerInNode,
       );
       if (!node) return;
 
       const availableNodes = getClosestNextAndPrevious(
         node,
         state.nodes,
-        state.edges
+        state.edges,
       ).filter((el) => el.type !== NodeType.EMPTY);
 
       const start = state.nodes.find((el) => el.type === NodeType.START);
@@ -1060,7 +1060,7 @@ const flowBuilderSlice = createSlice({
       }
 
       state.devModeState.availableNodeToJump = availableNodes.map(
-        (el) => el.id
+        (el) => el.id,
       );
 
       state.devModeState.arrowPreSelectNode = undefined;
@@ -1070,12 +1070,12 @@ const flowBuilderSlice = createSlice({
     },
     handleDrawerAction(
       state,
-      action: PayloadAction<{ id: string; action: string; stepId?: string }>
+      action: PayloadAction<{ id: string; action: string; stepId?: string }>,
     ) {
       const { stepId } = action.payload;
 
       const nodeToChange = state.nodes.find(
-        (node) => node.id === action.payload.id
+        (node) => node.id === action.payload.id,
       );
 
       if (!nodeToChange) return;
@@ -1092,12 +1092,12 @@ const flowBuilderSlice = createSlice({
         messageNodes.find(
           /* eslint-disable */
           (node) =>
-            (node?.data as MessageNodeData)?.customName === newMessageNodeName
+            (node?.data as MessageNodeData)?.customName === newMessageNodeName,
         )
       ) {
         postFixValue++;
         newMessageNodeName = `${capitalize(
-          action.payload.action
+          action.payload.action,
         )} ${postFixValue}`;
       }
 
@@ -1293,7 +1293,7 @@ const flowBuilderSlice = createSlice({
           })),
           { type: "select", id: nodeToChange.id, selected: true },
         ],
-        state.nodes
+        state.nodes,
       );
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
@@ -1308,7 +1308,7 @@ const flowBuilderSlice = createSlice({
           })),
           { type: "select", id: action.payload, selected: true },
         ],
-        state.nodes
+        state.nodes,
       );
     },
     deselectNodes(state) {
@@ -1318,7 +1318,7 @@ const flowBuilderSlice = createSlice({
           id: node.id,
           selected: false,
         })),
-        state.nodes
+        state.nodes,
       );
     },
     setIsDragging(state, action: PayloadAction<boolean>) {
@@ -1367,26 +1367,26 @@ const flowBuilderSlice = createSlice({
     },
     setJourneySettingsMaxEntries(
       state,
-      action: PayloadAction<JourneySettingsMaxUserEntries>
+      action: PayloadAction<JourneySettingsMaxUserEntries>,
     ) {
       state.journeySettings.maxEntries = action.payload;
     },
     setJourneySettingsQuietHours(
       state,
-      action: PayloadAction<JourneySettingsQuietHours>
+      action: PayloadAction<JourneySettingsQuietHours>,
     ) {
       state.journeySettings.quietHours = action.payload;
     },
     setJourneyFrequencyCappingRules(
       state,
-      action: PayloadAction<JourneySettingsEnableFrequencyCapping>
+      action: PayloadAction<JourneySettingsEnableFrequencyCapping>,
     ) {
       state.journeySettings.frequencyCapping = action.payload;
     },
 
     setMaxMessageSends(
       state,
-      action: PayloadAction<JourneySettingsMaxMessageSends>
+      action: PayloadAction<JourneySettingsMaxMessageSends>,
     ) {
       state.journeySettings.maxMessageSends = action.payload;
     },
@@ -1413,7 +1413,7 @@ const flowBuilderSlice = createSlice({
     },
     setJourneyEntryTimingTime(
       state,
-      action: PayloadAction<EntryTimingSpecificTime>
+      action: PayloadAction<EntryTimingSpecificTime>,
     ) {
       let weeklyOn = null;
       let defaultAdditionalValue: number | string | undefined | null = null;
@@ -1466,13 +1466,13 @@ const flowBuilderSlice = createSlice({
     },
     setJourneyEntryEnrollmentType(
       state,
-      action: PayloadAction<JourneyEnrollmentType>
+      action: PayloadAction<JourneyEnrollmentType>,
     ) {
       state.journeyEntrySettings.enrollmentType = action.payload;
     },
     setJourneyEntrySettings(
       state,
-      action: PayloadAction<JourneyEntrySettings | undefined>
+      action: PayloadAction<JourneyEntrySettings | undefined>,
     ) {
       if (action.payload === undefined)
         state.journeyEntrySettings = defaultJourneyEntrySettings;
@@ -1480,7 +1480,7 @@ const flowBuilderSlice = createSlice({
     },
     setJourneySettings(
       state,
-      action: PayloadAction<JourneySettings | undefined>
+      action: PayloadAction<JourneySettings | undefined>,
     ) {
       if (action.payload === undefined)
         state.journeySettings = defaultJourneySettings;
@@ -1497,13 +1497,13 @@ const flowBuilderSlice = createSlice({
     },
     setIsOnboardingWaitUntilTooltipVisible(
       state,
-      action: PayloadAction<boolean>
+      action: PayloadAction<boolean>,
     ) {
       state.isOnboardingWaitUntilTooltipVisible = action.payload;
     },
     setIsOnboardingWaitUntilTimeSettingTooltipVisible(
       state,
-      action: PayloadAction<boolean>
+      action: PayloadAction<boolean>,
     ) {
       state.isOnboardingWaitUntilTimeSettingTooltipVisible = action.payload;
     },
@@ -1515,7 +1515,7 @@ const flowBuilderSlice = createSlice({
     },
     setTemplateInlineCreator(
       state,
-      action: PayloadAction<TemplateInlineEditor | undefined>
+      action: PayloadAction<TemplateInlineEditor | undefined>,
     ) {
       state.templateInlineCreation = action.payload;
     },
@@ -1540,13 +1540,18 @@ const flowBuilderSlice = createSlice({
     setIsStarting(state, action: PayloadAction<boolean>) {
       state.isStarting = action.payload;
     },
-    setJourneySettingsConversionTracking(state, action: PayloadAction<JourneySettingsConversionTracking>) {
+    setJourneySettingsConversionTracking(
+      state,
+      action: PayloadAction<JourneySettingsConversionTracking>,
+    ) {
       if (action.payload === undefined)
-        state.journeySettings.conversionTracking = defaultJourneySettings.conversionTracking;
-      else
-        state.journeySettings.conversionTracking = action.payload;
+        state.journeySettings.conversionTracking =
+          defaultJourneySettings.conversionTracking;
+      else state.journeySettings.conversionTracking = action.payload;
 
-      state.journeySettings.conversionTracking.events = Array.from(new Set(state.journeySettings.conversionTracking.events));
+      state.journeySettings.conversionTracking.events = Array.from(
+        new Set(state.journeySettings.conversionTracking.events),
+      );
     },
   },
 });

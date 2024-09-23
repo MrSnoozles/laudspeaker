@@ -32,7 +32,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
 }) => {
   const [searchTagsValue, setSearchTagsValue] = useState("");
   const { journeySettings, availableTags } = useAppSelector(
-    (store) => store.flowBuilder
+    (store) => store.flowBuilder,
   );
   const dispatch = useDispatch();
 
@@ -45,7 +45,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
             <TagComponent
               tags={journeySettings.tags}
               possibleTags={availableTags.filter((el) =>
-                el.includes(searchTagsValue)
+                el.includes(searchTagsValue),
               )}
               onTagChange={(tags) => {
                 dispatch(setJourneySettingsTags(tags));
@@ -65,7 +65,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   setJourneySettingsQuietHours({
                     ...journeySettings.quietHours,
                     enabled: !journeySettings.quietHours.enabled,
-                  })
+                  }),
                 );
               }}
             >
@@ -96,7 +96,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                           setJourneySettingsQuietHours({
                             ...journeySettings.quietHours,
                             startTime: e.target.value,
-                          })
+                          }),
                         );
                       }}
                       id="quietHoursStartTimeInput"
@@ -118,7 +118,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                           setJourneySettingsQuietHours({
                             ...journeySettings.quietHours,
                             endTime: e.target.value,
-                          })
+                          }),
                         );
                       }}
                       id="quietHoursEndTimeInput"
@@ -143,7 +143,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                     setJourneySettingsQuietHours({
                       ...journeySettings.quietHours,
                       fallbackBehavior: el,
-                    })
+                    }),
                   )
                 }
               >
@@ -172,7 +172,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   setJourneySettingsMaxEntries({
                     ...journeySettings.maxEntries,
                     enabled: !journeySettings.maxEntries.enabled,
-                  })
+                  }),
                 );
               }}
             >
@@ -202,7 +202,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       setJourneySettingsMaxEntries({
                         ...journeySettings.maxEntries,
                         maxEntries: ev.target.value as MaxOptions,
-                      })
+                      }),
                     );
                   }}
                   className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
@@ -225,7 +225,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                     setJourneySettingsMaxEntries({
                       ...journeySettings.maxEntries!,
                       limitOnEverySchedule: checked,
-                    })
+                    }),
                   );
                 }}
               />
@@ -242,7 +242,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   setMaxMessageSends({
                     ...journeySettings.maxMessageSends,
                     enabled: !journeySettings.maxMessageSends.enabled,
-                  })
+                  }),
                 );
               }}
             >
@@ -273,7 +273,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       maxUsersReceive: checked
                         ? MaxOptions.FiveHundredThousand
                         : undefined,
-                    })
+                    }),
                   );
                 }}
               />
@@ -287,7 +287,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                         setMaxMessageSends({
                           ...journeySettings.maxMessageSends!,
                           maxUsersReceive: ev.target.value as MaxOptions,
-                        })
+                        }),
                       );
                     }}
                     className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
@@ -315,7 +315,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       maxSendRate: checked
                         ? MaxOptions.FiveHundredThousand
                         : undefined,
-                    })
+                    }),
                   );
                 }}
               />
@@ -328,7 +328,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                         setMaxMessageSends({
                           ...journeySettings.maxMessageSends!,
                           maxSendRate: ev.target.value as MaxOptions,
-                        })
+                        }),
                       );
                     }}
                     className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
@@ -357,7 +357,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   setJourneySettingsConversionTracking({
                     ...journeySettings.conversionTracking!,
                     enabled: !journeySettings.conversionTracking.enabled,
-                  })
+                  }),
                 );
               }}
             >
@@ -388,16 +388,17 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       setJourneySettingsConversionTracking({
                         ...journeySettings.conversionTracking!,
                         events: events,
-                      })
+                      }),
                     );
                   }}
                 />
               </div>
               <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
-                Conversion Deadline that will be there
+                Conversion Deadline
               </div>
               <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
-                Set the maximum amount of time, that can occur between a user entering a journey and a conversion
+                Set the maximum amount of time, that can occur between a user
+                entering a journey and a conversion
               </div>
               <div className="flex gap-5">
                 <div className="flex flex-col w-full">
@@ -413,10 +414,11 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                         setJourneySettingsConversionTracking({
                           ...journeySettings.conversionTracking!,
                           timeLimit: {
-                            unit: journeySettings.conversionTracking?.timeLimit?.unit,
-                            value: +ev
-                          }
-                        })
+                            unit: journeySettings.conversionTracking?.timeLimit
+                              ?.unit,
+                            value: +ev,
+                          },
+                        }),
                       );
                     }}
                     wrapperClassName="w-full"
@@ -426,22 +428,28 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                 <div className="flex flex-col w-full">
                   <div>
                     <select
-                      value={journeySettings.conversionTracking?.timeLimit?.unit}
+                      value={
+                        journeySettings.conversionTracking?.timeLimit?.unit
+                      }
                       onChange={(ev) => {
                         dispatch(
                           setJourneySettingsConversionTracking({
                             ...journeySettings.conversionTracking!,
                             timeLimit: {
-                              unit: ev.target.value as JourneySettingsConversionTrackingTimeLimitUnit,
-                              value: journeySettings.conversionTracking?.timeLimit?.value,
-                            }
-                          })
+                              unit: ev.target
+                                .value as JourneySettingsConversionTrackingTimeLimitUnit,
+                              value:
+                                journeySettings.conversionTracking?.timeLimit
+                                  ?.value,
+                            },
+                          }),
                         );
                       }}
                       className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                     >
                       {Object.values(
-                        JourneySettingsConversionTrackingTimeLimitUnit).map((option) => (
+                        JourneySettingsConversionTrackingTimeLimitUnit,
+                      ).map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>

@@ -4,25 +4,24 @@ import "./TagComponentBase.css";
 import { useEffect, useRef, useState } from "react";
 import { useClickAway } from "react-use";
 
-interface TagComponentBaseCommonProps {
+/*
+ * child components should directly extend
+ * this interface if they don't have any more
+ * props to add.
+ **/
+
+export interface TagComponentBaseCommonProps {
   tags: string[];
   possibleTags?: string[];
   onInputChange?: (val: string) => void;
   onTagChange: (tags: string[]) => void;
-  className?: string;  
+  className?: string;
 }
 
-interface TagComponentBaseProps
-            extends TagComponentBaseCommonProps {
+interface TagComponentBaseProps extends TagComponentBaseCommonProps {
   inputPlaceholder: string;
   noMatchingMessage: string;
   serverListEmptyMessage: string;
-}
-
-// TagComponentChildProps should be used
-// by any components that extends this interface
-export interface TagComponentChildProps
-                  extends TagComponentBaseCommonProps {
 }
 
 export default function TagComponentBase({
@@ -97,8 +96,8 @@ export default function TagComponentBase({
             someTagsFound
               ? "overflow-y-scroll max-h-[200px]"
               : noTagsFound
-              ? "max-w-[260px] h-[40px] items-center flex"
-              : "max-w-[260px] h-[40px] items-center flex"
+                ? "max-w-[260px] h-[40px] items-center flex"
+                : "max-w-[260px] h-[40px] items-center flex"
           } absolute transition-all rounded left-0 top-full z-[2] bg-white shadow-[0px_9px_28px_8px_rgba(0,0,0,0.05),0px_6px_16px_0px_rgba(0,0,0,0.08),0px_3px_6px_-4px_rgba(0,0,0,0.12);] w-full`}
         >
           {someTagsFound ? (

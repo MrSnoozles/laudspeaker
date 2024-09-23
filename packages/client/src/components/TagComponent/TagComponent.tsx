@@ -6,17 +6,14 @@ import { useClickAway } from "react-use";
 
 import {
   TagComponentBase,
-  TagComponentChildProps
+  TagComponentBaseCommonProps,
 } from "../common/TagComponentBase";
 
-interface TagComponentProps extends TagComponentChildProps {
-}
-
-export default function TagComponent(props: TagComponentProps) {
+export default function TagComponent(props: TagComponentBaseCommonProps) {
   return TagComponentBase({
     ...props,
     inputPlaceholder: "Please select or enter keywords to create a new tag",
     noMatchingMessage: "No matching tags",
-    serverListEmptyMessage: "No tags, enter to create a new tag"
+    serverListEmptyMessage: "No tags, enter to create a new tag",
   });
 }

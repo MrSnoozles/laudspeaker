@@ -1,7 +1,4 @@
-import {
-  FC,
-  PureComponent
-} from "react";
+import { FC, PureComponent } from "react";
 import {
   LineChart,
   Line,
@@ -11,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   TooltipProps,
-  Legend
+  Legend,
 } from "recharts";
 import {
   ValueType,
@@ -39,7 +36,7 @@ const CustomTooltip = ({
           >
             <div className="flex gap-1 items-center">
               <Dot color={`${event.color}` || "#000"} width={6} height={6} />
-              <span>{(event.name as string)}</span>
+              <span>{event.name as string}</span>
             </div>
             <span>{event.value}%</span>
           </div>
@@ -57,7 +54,14 @@ const CustomizedAxisTick = (props: any) => {
 
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={16} textAnchor="end" fill="#666" transform="rotate(-35)">
+      <text
+        x={0}
+        y={0}
+        dy={16}
+        textAnchor="end"
+        fill="#666"
+        transform="rotate(-35)"
+      >
         {payload.value}
       </text>
     </g>
@@ -66,7 +70,7 @@ const CustomizedAxisTick = (props: any) => {
 
 const OverviewConversionChart: FC<OverviewConversionChartProps> = ({
   data,
-  lines
+  lines,
 }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -100,19 +104,19 @@ const OverviewConversionChart: FC<OverviewConversionChartProps> = ({
           content={<CustomTooltip />}
           cursor={{ strokeDasharray: "5 5", stroke: "#4B5563" }}
         />
-        <Legend verticalAlign="top" height={36}/>
-        {
-          lines.map((line) => {
-            return (
-              <Line
-                key={line.event}
-                dataKey={`data.${line.event}`}
-                name={line.event}
-                stroke={line.color}
-                fill={line.color}
-                strokeWidth={1.8} />)
-          })
-        }
+        <Legend verticalAlign="top" height={36} />
+        {lines.map((line) => {
+          return (
+            <Line
+              key={line.event}
+              dataKey={`data.${line.event}`}
+              name={line.event}
+              stroke={line.color}
+              fill={line.color}
+              strokeWidth={1.8}
+            />
+          );
+        })}
       </LineChart>
     </ResponsiveContainer>
   );

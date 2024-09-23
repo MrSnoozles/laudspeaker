@@ -6,17 +6,14 @@ import { useClickAway } from "react-use";
 
 import {
   TagComponentBase,
-  TagComponentChildProps
+  TagComponentBaseCommonProps,
 } from "../common/TagComponentBase";
 
-interface EventListComponentProps extends TagComponentChildProps {
-}
-
-export default function EventListComponent(props: EventListComponentProps) {
+export default function EventListComponent(props: TagComponentBaseCommonProps) {
   return TagComponentBase({
     ...props,
     inputPlaceholder: "Add events to track",
     noMatchingMessage: "Press enter to add event",
-    serverListEmptyMessage: "Press enter to add event"
+    serverListEmptyMessage: "Press enter to add event",
   });
 }

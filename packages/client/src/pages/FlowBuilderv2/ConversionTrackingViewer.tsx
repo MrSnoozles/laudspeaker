@@ -2,7 +2,7 @@ import React, { FC } from "react";
 import {
   JourneySettingsQuietFallbackBehavior,
   JourneySettingsQuietHours,
-  JourneySettingsConversionTracking
+  JourneySettingsConversionTracking,
 } from "reducers/flow-builder.reducer";
 
 interface ConversionTrackingViewerProps {
@@ -24,7 +24,7 @@ const ConversionTrackingViewer: FC<ConversionTrackingViewerProps> = ({
               Events to track: {conversionTrackingSettings.events.join(", ")}
             </li>
             <li>
-              Conversion deadline:{" "}
+              Conversion deadline:
               {conversionTrackingSettings.timeLimit?.value}{" "}
               {conversionTrackingSettings.timeLimit?.unit}
             </li>

@@ -24,13 +24,13 @@ interface GetJourneyStatisticsDto {
     finishedDataPoints: number[];
     enrolledCount: number;
     finishedCount: number;
-  },
+  };
   conversionData: {
     conversionDataPoints: Record<string, any>[];
     lines: Record<string, any>[];
     allEvents: string[];
     totalEvents: number;
-  }
+  };
 }
 
 const FlowBuilderOverview = () => {
@@ -51,10 +51,17 @@ const FlowBuilderOverview = () => {
   const [enrolledCount, setEnrolledCount] = useState<number>(0);
   const [finishedCount, setFinishedCount] = useState<number>(0);
 
-  const [conversionDataPoints, setConversionDataPoints] = useState<Record<string, any>[]>([]);
-  const [conversionDataLines, setConversionDataLines] = useState<Record<string, any>[]>([]);
-  const [conversionDataEvents, setConversionDataEvents] = useState<string[]>([]);
-  const [conversionDataPointsEventsCount, setConversionDataPointsEventsCount] = useState<number>(0);
+  const [conversionDataPoints, setConversionDataPoints] = useState<
+    Record<string, any>[]
+  >([]);
+  const [conversionDataLines, setConversionDataLines] = useState<
+    Record<string, any>[]
+  >([]);
+  const [conversionDataEvents, setConversionDataEvents] = useState<string[]>(
+    [],
+  );
+  const [conversionDataPointsEventsCount, setConversionDataPointsEventsCount] =
+    useState<number>(0);
 
   const loadData = async () => {
     try {

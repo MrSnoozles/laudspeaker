@@ -1,5 +1,2 @@
-export type {
-	TagComponentChildProps
-} from "./TagComponentBase";
-
+export type { TagComponentBaseCommonProps } from "./TagComponentBase";
 export { default as TagComponentBase } from "./TagComponentBase";
