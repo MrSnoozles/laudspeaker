@@ -217,7 +217,6 @@ export class EventsPreProcessor extends ProcessorBase {
       );
 
       if (job.data.event) {
-<<<<<<< HEAD
         const clickHouseRecord: ClickHouseEvent = {
           correlationKey: job.data.event.correlationKey,
           correlationValue: job.data.event.correlationValue,
@@ -234,8 +233,6 @@ export class EventsPreProcessor extends ProcessorBase {
           format: 'JSONEachRow',
         });
 
-=======
->>>>>>> staging
         await this.eventModel.create([
           {
             ...this.removeDollarSignsFromKeys(job.data.event),
