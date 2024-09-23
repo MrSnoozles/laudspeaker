@@ -655,7 +655,7 @@ export class EventsService {
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    let filter = `workspaceId = '${workspace.id}'`;
+    let filter = `workspace_id = '${workspace.id}'`;
 
     if (search !== '') {
       filter += ` AND event ILIKE '%${search}%'`;
@@ -1283,7 +1283,7 @@ export class EventsService {
       event: event.event,
       payload: event.payload,
       uuid: event.uuid,
-      workspaceId,
+      workspace_id: workspaceId,
       source: ClickHouseEventSource.MOBILE
     };
     await this.clickhouseClient.insertAsync({
@@ -1584,7 +1584,7 @@ export class EventsService {
       event: event.event,
       payload: event.payload,
       uuid: event.uuid,
-      workspaceId,
+      workspace_id: workspaceId,
       source: ClickHouseEventSource.MOBILE
     };
     await this.clickhouseClient.insertAsync({

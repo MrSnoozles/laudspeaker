@@ -9,5 +9,5 @@ export interface ClickHouseEvent {
   payload: string;
   timestamp?: string;
   uuid: string;
-  workspaceId: string;
+  workspace_id: string;
 }

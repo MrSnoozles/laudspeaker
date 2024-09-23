@@ -224,7 +224,7 @@ export class EventsPreProcessor extends ProcessorBase {
           source: job.data.event.source,
           timestamp: job.data.event.timestamp,
           uuid: job.data.event.uuid,
-          workspaceId: job.data.workspace.id,
+          workspace_id: job.data.workspace.id,
         };
         await this.clickhouseClient.insertAsync({
           table: ClickHouseTable.EVENTS,
