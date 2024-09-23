@@ -15,7 +15,7 @@ interface EventListComponentProps extends TagComponentChildProps {
 export default function EventListComponent(props: EventListComponentProps) {
   return TagComponentBase({
     ...props,
-    inputPlaceholder: "Add events you wish to track",
+    inputPlaceholder: "Add events to track",
     noMatchingMessage: "Press enter to add event",
     serverListEmptyMessage: "Press enter to add event"
   });

@@ -1,6 +1,7 @@
 import { RadioGroup } from "@headlessui/react";
 import CheckBox from "components/Checkbox/Checkbox";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import Input from "components/Elements/Inputv2";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import RadioOption from "components/Radio/RadioOption";
 import TagComponent from "components/TagComponent/TagComponent";
@@ -16,6 +17,7 @@ import {
   setJourneySettingsTags,
   setJourneyFrequencyCappingRules,
   setJourneySettingsConversionTracking,
+  JourneySettingsConversionTrackingTimeLimitUnit
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
@@ -103,7 +105,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                       placeholder="Select start time"
                     />
                   </div>
-                </div>
+                </div> 
                 <div className="flex flex-col w-full">
                   <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
                     End time
@@ -369,27 +371,87 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
-            Select the events you wish to track to show conversion
+            Define the events that you consider conversions for this journey
           </div>
           {journeySettings.conversionTracking.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
-              <EventListComponent
-                tags={journeySettings.conversionTracking.events}
-                // TODO: auto-complete list of events
-                possibleTags={[]}
-                onTagChange={(events) => {
-                  dispatch(
-                    setJourneySettingsConversionTracking({
-                      ...journeySettings.conversionTracking!,
-                      events: events
-                    })
-                  );
-                }}
-              />
-
+              <div className="flex flex-col w-full">
+                <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
+                  Events
+                </div>
+                <EventListComponent
+                  tags={journeySettings.conversionTracking.events}
+                  // TODO: auto-complete list of events
+                  possibleTags={[]}
+                  onTagChange={(events) => {
+                    dispatch(
+                      setJourneySettingsConversionTracking({
+                        ...journeySettings.conversionTracking!,
+                        events: events
+                      })
+                    );
+                  }}
+                />
+              </div>
+              <div className="text-[#111827] font-inter text-[14px] leading-[22px] font-semibold">
+                Conversion Deadline
+              </div>
+              <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+                Set the maximum amount of time, that can occur between a user entering a journey and a conversion
+              </div>
+              <div className="flex gap-5">
+                <div className="flex flex-col w-full">
+                  <Input
+                    name="conversionDeadline"
+                    id="conversionDeadline"
+                    type="number"
+                    max={500}
+                    min={1}
+                    value={journeySettings.conversionTracking?.timeLimit?.value.toString()}
+                    onChange={(ev) => {
+                      dispatch(
+                        setJourneySettingsConversionTracking({
+                          ...journeySettings.conversionTracking!,
+                          timeLimit: {
+                            unit: journeySettings.conversionTracking?.timeLimit?.unit,
+                            value: +ev
+                          }
+                        })
+                      );
+                    }}
+                    wrapperClassName="w-full"
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex flex-col w-full">
+                  <div>
+                    <select
+                      value={journeySettings.conversionTracking?.timeLimit?.unit}
+                      onChange={(ev) => {
+                        dispatch(
+                          setJourneySettingsConversionTracking({
+                            ...journeySettings.conversionTracking!,
+                            timeLimit: {
+                              unit: ev.target.value as JourneySettingsConversionTrackingTimeLimitUnit,
+                              value: journeySettings.conversionTracking?.timeLimit?.value,
+                            }
+                          })
+                        );
+                      }}
+                      className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
+                    >
+                      {Object.values(JourneySettingsConversionTrackingTimeLimitUnit).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </div>
+          </div>
         {/* <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
         <div className="flex flex-col gap-[10px]">
           <div className="flex items-center">

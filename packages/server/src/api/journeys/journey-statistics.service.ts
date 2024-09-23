@@ -23,7 +23,8 @@ import {
   eachDayOfInterval,
   eachWeekOfInterval,
   startOfDay,
-  endOfDay
+  endOfDay,
+  addDays
 } from 'date-fns';
 import { Journey } from './entities/journey.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -34,6 +35,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { ClientSession, Model, SortOrder } from 'mongoose';
 import { EventDocument, Event } from '../events/schemas/event.schema';
 import { BaseLaudspeakerService } from '@/common/services/base.laudspeaker.service';
+import {
+  JourneySettingsConversionTrackingTimeLimitUnit
+} from '@/api/journeys/types/additional-journey-settings.interface';
 
 @Injectable()
 export class JourneyStatisticsService extends BaseLaudspeakerService {
@@ -62,18 +66,13 @@ export class JourneyStatisticsService extends BaseLaudspeakerService {
     session: string
   ) {
 
-    this.journey = journey;
-    // set start to start of day
-    this.startTime = startOfDay(startTime);
-    // set end to end of day
-    this.endTime = endOfDay(endTime);
-    this.frequency = frequency;
-    this.session = session;
-
-    this.result = {
-      enrollmentData: {},
-      conversionData: {}
-    };
+    this.initValues(
+      journey,
+      startTime,
+      endTime,
+      frequency,
+      session,
+    );
 
     await Promise.all([
       this.processEnrollmentData(),
@@ -81,6 +80,51 @@ export class JourneyStatisticsService extends BaseLaudspeakerService {
     ]);
 
     return this.result;
+  }
+
+  private initValues(
+    journey: Journey,
+    startTime: Date,
+    endTime: Date,
+    frequency: 'daily' | 'weekly',
+    session: string
+  ) {
+    this.journey = journey;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.frequency = frequency;
+    this.session = session;
+
+    this.setStartEndTimes();
+
+    this.result = {
+      enrollmentData: {},
+      conversionData: {}
+    };
+  }
+
+  private setStartEndTimes() {
+    const journeyStart = this.journey.startedAt;
+    const conversionDeadline = this.journey
+              .journeySettings
+              ?.conversionTracking
+              ?.timeLimit;
+
+    if (journeyStart) {
+      this.startTime = journeyStart;
+    }
+    else
+      this.startTime = startOfDay(this.startTime);
+
+    if (conversionDeadline) {
+      if (conversionDeadline.unit == JourneySettingsConversionTrackingTimeLimitUnit.Days)
+        this.endTime = addDays(
+          this.startTime,
+          conversionDeadline.value
+        );
+    }
+    else
+      this.endTime = endOfDay(this.endTime);
   }
 
   private async processEnrollmentData() {
