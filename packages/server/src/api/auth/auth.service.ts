@@ -215,6 +215,14 @@ export class AuthService {
       relations: [
         'organization.owner.teams.organization.workspaces',
         'organization.owner.teams.organization.plan',
+        'organization.owner.teams.organization.workspaces.mailgunConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.sendgridConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.resendConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.twilioConnections',
+        'organization.owner.teams.organization.workspaces.pushConnections',
+        'organization.owner.teams.organization.owner',
+        'organization.plan',
+        'organization.owner',
       ],
     });
     return { account: workspace.organization.owner, workspace: workspace };

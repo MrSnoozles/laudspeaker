@@ -38,6 +38,7 @@ import {
   ClickHouseEvent,
   ClickHouseClient
 } from '@/common/services/clickhouse';
+import { CacheConstants } from '@/common/services/cache.constants';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -60,10 +61,10 @@ export class EventsPreProcessor extends ProcessorBase {
     ProviderType,
     (job: Job<any, any, string>) => Promise<void>
   > = {
-    [ProviderType.LAUDSPEAKER]: this.handleCustom,
-    [ProviderType.MESSAGE]: this.handleMessage,
-    [ProviderType.WU_ATTRIBUTE]: this.handleAttributeChange,
-  };
+      [ProviderType.LAUDSPEAKER]: this.handleCustom,
+      [ProviderType.MESSAGE]: this.handleMessage,
+      [ProviderType.WU_ATTRIBUTE]: this.handleAttributeChange,
+    };
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -198,7 +199,7 @@ export class EventsPreProcessor extends ProcessorBase {
           job.data.event
         );
       let journeys: Journey[] = await this.cacheService.get(
-        'Journeys',
+        CacheConstants.JOURNEYS,
         job.data.workspace.id,
         async () => {
           return await this.journeysRepository.find({
@@ -216,6 +217,7 @@ export class EventsPreProcessor extends ProcessorBase {
       );
 
       if (job.data.event) {
+<<<<<<< HEAD
         const clickHouseRecord: ClickHouseEvent = {
           correlationKey: job.data.event.correlationKey,
           correlationValue: job.data.event.correlationValue,
@@ -232,6 +234,8 @@ export class EventsPreProcessor extends ProcessorBase {
           format: 'JSONEachRow',
         });
 
+=======
+>>>>>>> staging
         await this.eventModel.create([
           {
             ...this.removeDollarSignsFromKeys(job.data.event),
@@ -242,9 +246,7 @@ export class EventsPreProcessor extends ProcessorBase {
       }
 
       let eventJobs = journeys.map((journey) => ({
-        //to do add here modified
         account: job.data.owner,
-        //workspace: job.data.workspace,
         event: job.data.event,
         journey: {
           ...journey,
@@ -298,59 +300,58 @@ export class EventsPreProcessor extends ProcessorBase {
   }
 
   async handleMessage(job: Job<any, any, string>): Promise<any> {
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     let err: any;
-
     try {
-      const journeys = await queryRunner.manager.find(Journey, {
-        where: {
-          workspace: {
-            id: job.data.workspaceId,
-          },
-          isActive: true,
-          isPaused: false,
-          isStopped: false,
-          isDeleted: false,
-        },
-      });
+      const {
+        customer,
+        findType,
+      }: { customer: CustomerDocument; findType: FindType } =
+        await this.eventsService.findOrCreateCustomer(
+          job.data.workspace.id,
+          job.data.session,
+          null,
+          null,
+          { correlationKey: '_id', correlationValue: job.data.customer, event: '' }
+        );
+      let journeys: Journey[] = await this.cacheService.get(
+        CacheConstants.JOURNEYS,
+        job.data.workspace.id,
+        async () => {
+          return await this.journeysRepository.find({
+            where: {
+              workspace: {
+                id: job.data.workspace.id,
+              },
+              isActive: true,
+              isPaused: false,
+              isStopped: false,
+              isDeleted: false,
+            },
+          });
+        }
+      );
       for (let i = 0; i < journeys.length; i++) {
         await Producer.add(QueueType.EVENTS, {
-            workspaceId: job.data.workspaceId,
-            message: job.data.message,
-            customer: job.data.customer,
-            journeyID: journeys[i].id,
-          }, EventType.MESSAGE);
+          ...job.data,
+          workspaceId: job.data.workspaceId,
+          message: job.data.message,
+          customer,
+          journey: journeys[i],
+        }, EventType.MESSAGE);
       }
 
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
     } catch (e) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.error(
-        e,
-        this.handleMessage.name,
-        job.data.session,
-        job.data.accountID
-      );
       err = e;
     } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
-    }
-    if (err) {
-      this.error(
-        err,
-        this.handleMessage.name,
-        job.data.session,
-        job.data.accountID
-      );
-      throw err;
+      if (err) {
+        this.error(
+          err,
+          this.handleMessage.name,
+          job.data.session,
+          job.data.accountID
+        );
+        throw err;
+      }
     }
   }
 

@@ -22,6 +22,7 @@ import {
   ClickHouseClient
 } from '@/common/services/clickhouse';
 import { CacheService } from '@/common/services/cache.service';
+import { CacheConstants } from '@/common/services/cache.constants';
 
 @Injectable()
 export class StepsService {
@@ -392,7 +393,7 @@ export class StepsService {
     try {
       let query = this.stepsRepository
         .createQueryBuilder('step')
-        .where({ journey: journeyID })
+        .where({ journeyId: journeyID })
         .andWhere("metadata -> 'destination' IS NULL")
         .andWhere("metadata -> 'timeBranch' -> 'destination' IS NULL")
         .andWhere(`NOT EXISTS (
@@ -458,7 +459,7 @@ export class StepsService {
     queryRunner?: QueryRunner
   ): Promise<Step | null> {
     const startStep = await this.cacheService.getIgnoreError(
-      'JourneyWorkspaceStartStep',
+      CacheConstants.JOURNEY_WORKSPACE_START_STEPS,
       journey.id,
       async () => {
         return await this.findByJourneyAndType(

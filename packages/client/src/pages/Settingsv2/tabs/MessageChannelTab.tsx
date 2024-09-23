@@ -12,13 +12,13 @@ import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
 
 export enum MessageChannel {
+  PUSH,
   MAILGUN,
   SENDGRID,
   RESEND,
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
-  PUSH,
 }
 
 interface MessageChannelAdditionalInfoFixture {
@@ -36,6 +36,11 @@ interface MessageChannelCardFixture {
   disabled?: boolean;
   connected?: boolean;
   additionalInfo?: MessageChannelAdditionalInfoFixture[];
+}
+
+interface PushPlatform {
+  fileName: string;
+  isTrackingDisabled: boolean;
 }
 
 // const emailServiceToAdditionalInfoMap: Record<
@@ -58,11 +63,11 @@ interface MessageChannelCardFixture {
 // };
 
 const messageChannelToLinkMap: Record<MessageChannel, string> = {
+  [MessageChannel.PUSH]: "/settings/push",
   [MessageChannel.MAILGUN]: "/settings/email/mailgun",
   [MessageChannel.SENDGRID]: "/settings/email/sendgrid",
   [MessageChannel.RESEND]: "/settings/email/resend",
-  [MessageChannel.TWILIO]: "/settings/twilio",
-  [MessageChannel.PUSH]: "/settings/push",
+  [MessageChannel.TWILIO]: "/settings/sms",
   [MessageChannel.CUSTOM_MODAL]: "",
   [MessageChannel.SLACK]: "",
 };
@@ -71,25 +76,29 @@ const supportedMessageChannelCardsFixtures: Record<
   MessageChannel,
   MessageChannelCardFixture
 > = {
+  [MessageChannel.PUSH]: {
+    id: "create",
+    channel: MessageChannel.PUSH,
+    title: "Push",
+    icon: pushLogoIcon,
+  },
   [MessageChannel.MAILGUN]: {
     id: "create",
     channel: MessageChannel.MAILGUN,
-    title: "Email (mailgun)",
+    title: "Mailgun",
     icon: emailCardIconImage,
   },
   [MessageChannel.SENDGRID]: {
     id: "create",
     channel: MessageChannel.SENDGRID,
-    title: "Email (sendgrid)",
+    title: "Sendgrid",
     icon: emailCardIconImage,
   },
   [MessageChannel.RESEND]: {
     id: "create",
     channel: MessageChannel.RESEND,
-    title: "Email (resend)",
+    title: "Resend",
     icon: emailCardIconImage,
-    commingSoon: true,
-    disabled: true,
   },
   [MessageChannel.TWILIO]: {
     id: "create",
@@ -102,12 +111,8 @@ const supportedMessageChannelCardsFixtures: Record<
     channel: MessageChannel.CUSTOM_MODAL,
     title: "Onboarding Suite",
     icon: customModalCardIconImage,
-  },
-  [MessageChannel.PUSH]: {
-    id: "create",
-    channel: MessageChannel.PUSH,
-    title: "Push",
-    icon: pushLogoIcon,
+    commingSoon: true,
+    disabled: true,
   },
   [MessageChannel.SLACK]: {
     id: "create",
@@ -132,12 +137,32 @@ const MessageChannelTab = () => {
       title: connection.name,
       icon: emailCardIconImage,
     })) || []),
+    ...(account?.workspace.resendConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.RESEND,
+      title: connection.name,
+      icon: emailCardIconImage,
+    })) || []),
     ...(account?.workspace.sendgridConnections.map((connection) => ({
       id: connection.id,
       channel: MessageChannel.SENDGRID,
       title: connection.name,
       icon: emailCardIconImage,
     })) || []),
+    ...(account?.workspace.twilioConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.TWILIO,
+      title: connection.name,
+      icon: twilioCardIconImage,
+    })) || []),
+    ...(Object.entries(account?.workspace.pushPlatforms || {}).map(
+      ([key, connection]: [string, PushPlatform]) => ({
+        id: key, // Using the key as an ID or adjust as needed
+        channel: MessageChannel.PUSH,
+        title: connection.fileName, // Adjust this if you need a different title
+        icon: pushLogoIcon,
+      })
+    ) || []),
   ];
 
   const supportedFixtures = Object.values(supportedMessageChannelCardsFixtures);
@@ -162,9 +187,14 @@ const MessageChannelTab = () => {
       <div className="text-[#4B5563]">
         Browse the available channels in Laudspeaker, and set up the channels
         you want to use{" "}
-        <button className="text-[#111827] font-bold underline">
+        <a
+          href="https://laudspeaker.com/docs/getting-started/setting-up-mobile-push"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#111827] font-bold underline"
+        >
           Documentation
-        </button>
+        </a>
       </div>
 
       <div className="w-full h-[1px] bg-[#E5E7EB]" />
