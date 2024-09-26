@@ -4,38 +4,59 @@
  * @param attribute_type The type of the attribute (default: "String")
  * @param attribute_subtype The subtype of the attribute (default: "String")
  * @param attribute_format The format of the attribute (default: "")
+ * @param expectedError Optional error message to check for
  */
+
 export const createCustomerKey = (
   attribute: string,
   attribute_type: string = "String",
-  attribute_subtype: string = "String",
-  attribute_format: string = ""
+  attribute_subtype: string = "",
+  attribute_format: string = "",
+  expectedError?: string
 ) => {
+  // Navigate to the home page
+  cy.visit('/');
+
   // Navigate to the Audience settings
   cy.contains("Audience").click();
   cy.contains("People").click();
   cy.get(':contains("Settings"):last').click();
 
-  // Add a new attribute
   cy.contains("Add attribute").click();
-  cy.get("input").clear().type(attribute);
+  
+  cy.get('.flex.flex-col.gap-2\\.5 > div').last().within(() => {
+    if (attribute) {
+      cy.get('input').first().clear().type(attribute);
+    }
 
-  // Select the attribute type
-  cy.contains(attribute_type).click();
-  cy.get(`[data-option="${attribute_type}"]`).click();
+    cy.get('button').eq(0).click();
+    cy.get(`[data-option="${attribute_type}"]`).click();
 
-  // Save the new attribute
-  cy.contains("Save").click();
+    // If there's a subtype, select it
+    if (attribute_subtype) {
+      cy.get('button').eq(1).click();
+      cy.get(`[data-option="${attribute_subtype}"]`).click();
+    }
 
-  // Wait for the save operation to complete
-  cy.wait(1000);
+    // If there's a date format, select it
+    if (attribute_format) {
+      cy.get('button').eq(2).click();
+      cy.get(`[data-option="${attribute_format}"]`).click();
+    }
+  });
 
-  // Verify that the attribute was successfully created
-  cy.contains("Attribute settings updated!").should("exist");
-
-  // Additional wait to ensure the UI is ready for the next action
-  cy.wait(1000);
-
-  // Note: attribute_subtype and attribute_format parameters are currently unused
+  // Check for expected error or success
+  if (expectedError) {
+    // If an error is expected, check for its presence
+    cy.contains(expectedError).should('exist');
+    // Ensure the Save button is disabled
+    cy.contains('Save').should('be.disabled');
+  } else {
+    // If no error is expected, check that no error messages exist
+    cy.get('.text-red-500').should('not.exist');
+    // Save the new attribute
+    cy.contains("Save").click();
+    // Verify that the attribute was successfully created
+    cy.contains("Attributes successfully modified!").should("exist");
+  }
 };
-

@@ -70,6 +70,7 @@ const PeopleSettings = () => {
   });
   const [isDuplicationDetected, setIsDuplicationDetected] = useState(false);
   const [isAttributeKeysDefined, setIsAttributeKeysDefined] = useState(false);
+  const [invalidJsonKeys, setInvalidJsonKeys] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const dispatch = useDispatch();
@@ -149,7 +150,8 @@ const PeopleSettings = () => {
         ].length === 0) ||
       isSaving ||
       isDuplicationDetected ||
-      !isAttributeKeysDefined
+      !isAttributeKeysDefined ||
+      invalidJsonKeys.length > 0
     ) {
       return;
     }
@@ -213,6 +215,13 @@ const PeopleSettings = () => {
     navigate("/people");
   };
 
+  const isValidJsonKey = (key: string) => {
+    // JSON key naming rules: must start with a letter, underscore, or dollar sign,
+    // followed by letters, digits, underscores, or dollar signs
+    const jsonKeyRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+    return jsonKeyRegex.test(key);
+  };
+
   useEffect(() => {
     loadKeyTypes();
     loadPossibleKeys();
@@ -258,6 +267,12 @@ const PeopleSettings = () => {
       )
     );
     setIsAttributeKeysDefined(possibleAttributes.every((attr) => !!attr.name));
+    
+    // Validate JSON key names
+    const invalidKeys = possibleAttributes
+      .filter((attr) => !isValidJsonKey(attr.name))
+      .map((attr) => attr.name);
+    setInvalidJsonKeys(invalidKeys);
   }, [possibleAttributes]);
 
   const handleTrackAttributeCreate = (attribute: Attribute) => {
@@ -517,6 +532,12 @@ const PeopleSettings = () => {
                     </div>
                   )}
 
+                  {!isValidJsonKey(attr.name) && (
+                    <div className="text-red-500">
+                      Invalid key name; keys must adhere to JSON key naming rules. See <a href="https://docs.n8n.io/reference/json-key-names" className="text-blue-500">here</a> for more information.
+                    </div>
+                  )}
+
                   <div
                     className="cursor-pointer"
                     onClick={() => {
@@ -558,7 +579,8 @@ const PeopleSettings = () => {
                     ].length === 0) ||
                   isSaving ||
                   isDuplicationDetected ||
-                  !isAttributeKeysDefined
+                  !isAttributeKeysDefined ||
+                  invalidJsonKeys.length > 0
                 }
                 onClick={handleSave}
               >
