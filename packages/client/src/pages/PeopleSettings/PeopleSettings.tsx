@@ -267,7 +267,7 @@ const PeopleSettings = () => {
       )
     );
     setIsAttributeKeysDefined(possibleAttributes.every((attr) => !!attr.name));
-    
+
     // Validate JSON key names
     const invalidKeys = possibleAttributes
       .filter((attr) => !isValidJsonKey(attr.name))
@@ -534,7 +534,15 @@ const PeopleSettings = () => {
 
                   {!isValidJsonKey(attr.name) && (
                     <div className="text-red-500">
-                      Invalid key name; keys must adhere to JSON key naming rules. See <a href="https://docs.n8n.io/reference/json-key-names" className="text-blue-500">here</a> for more information.
+                      Invalid key name; keys must adhere to JSON key naming
+                      rules. See{" "}
+                      <a
+                        href="https://docs.n8n.io/reference/json-key-names"
+                        className="text-blue-500"
+                      >
+                        here
+                      </a>{" "}
+                      for more information.
                     </div>
                   )}
 
