@@ -77,7 +77,11 @@ export class ClickHouseClient implements OnModuleDestroy {
     return this.insert(insertParams);
   }
 
+  async disconnect() {
+    return this.client.close();
+  }
+  
   async onModuleDestroy() {
-    await this.client.close();
+    await this.disconnect();
   }
 }

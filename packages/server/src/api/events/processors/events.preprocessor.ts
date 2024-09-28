@@ -217,29 +217,17 @@ export class EventsPreProcessor extends ProcessorBase {
       );
 
       if (job.data.event) {
-        const clickHouseRecord: ClickHouseEvent = {
-          correlationKey: job.data.event.correlationKey,
-          correlationValue: job.data.event.correlationValue,
-          event: job.data.event.event,
-          payload: job.data.event.payload,
-          source: job.data.event.source,
-          timestamp: job.data.event.timestamp,
-          uuid: job.data.event.uuid,
-          workspace_id: job.data.workspace.id,
-        };
+        const clickHouseRecord: ClickHouseEvent = this.eventsService.toClickHouseEvent(
+          job.data.event,
+          job.data.workspace.id,
+          job.data.event.source
+        );
+        
         await this.clickhouseClient.insertAsync({
           table: ClickHouseTable.EVENTS,
           values: [clickHouseRecord],
           format: 'JSONEachRow',
         });
-
-        await this.eventModel.create([
-          {
-            ...this.removeDollarSignsFromKeys(job.data.event),
-            workspaceId: job.data.workspace.id,
-            createdAt: new Date().toISOString(),
-          },
-        ]);
       }
 
       let eventJobs = journeys.map((journey) => ({

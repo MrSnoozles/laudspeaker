@@ -5,31 +5,36 @@ import {
   ClickHouseTable,
   ClickHouseEvent,
 } from '@/common/services/clickhouse';
-// import { EventSchema } from '@/api/events/schemas/event.schema';
 
 export class MigrateEventsFromMongoToClickhouse1727222269995 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
       const lib = await import('mongoose');
-      const mongoose = new lib.Mongoose();
 
-      await this.migrateEvents(queryRunner, mongoose);
+      if (lib) {
+        const mongoose = new lib.Mongoose();
+        await this.migrateEvents(queryRunner, mongoose);
+        console.log("Events have been successfully migrated from MongoDB to Clickhouse");
+      }
+      else {
+        console.log("mongoose not found. Skipping migrating events from MongoDB to Clickhouse");
+      }
 
-      throw "ERROR";
+      throw new Error("ERR");
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
       throw new Error("Irreversible migration");
     }
 
-    private async migrateEvents(queryRunner: QueryRunner, mongoose): Promise<void> {
+    private async migrateEvents(
+      queryRunner: QueryRunner,
+      mongoose
+    ) {
       const mg = await mongoose.connect(
         formatMongoConnectionString(process.env.MONGOOSE_URL)
       );
 
-      debugger
-      let clickHouseRecord: ClickHouseEvent;
       const clickhouseOptions: Record <string, any> = {
         url: process.env.CLICKHOUSE_HOST
           ? process.env.CLICKHOUSE_HOST.includes('http')
@@ -43,29 +48,33 @@ export class MigrateEventsFromMongoToClickhouse1727222269995 implements Migratio
         keep_alive: { enabled: true }
       }
       const clickhouseClient = new ClickHouseClient(clickhouseOptions);
+      
       const collection = mg.connection.db.collection('events');
       const mongoEvents = await collection.find().toArray();
+
+      let clickHouseRecord: ClickHouseEvent;
       const eventsToInsert: ClickHouseEvent[] = [];
 
       for (let event of mongoEvents) {
         clickHouseRecord = {
+          uuid: event.uuid,
+          generated_at: event.timestamp,
           correlation_key: event.correlationKey,
           correlation_value: event.correlationValue,
           created_at: event.createdAt,
           event: event.event,
           payload: event.payload,
+          context: event.context,
           source: event.source,
-          timestamp: event.timestamp,
-          uuid: event.uuid,
           workspace_id: event.workspaceId,
         };
 
         eventsToInsert.push(clickHouseRecord);
       }
 
-      await clickhouseClient.insertAsync({
+      await clickhouseClient.insert({
         table: ClickHouseTable.EVENTS,
-        values: [clickHouseRecord],
+        values: eventsToInsert,
         format: 'JSONEachRow',
       });
 
@@ -74,6 +83,7 @@ export class MigrateEventsFromMongoToClickhouse1727222269995 implements Migratio
         throw error;
       } finally {
         await mg.disconnect();
+        await clickhouseClient.disconnect();
       }
     }
 }

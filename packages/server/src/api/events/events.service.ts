@@ -1277,26 +1277,17 @@ export class EventsService {
       { new: true }
     );
 
-    const clickHouseRecord: ClickHouseEvent = {
-      correlationKey: event.correlationKey,
-      correlationValue: customer._id,
-      event: event.event,
-      payload: event.payload,
-      uuid: event.uuid,
-      workspace_id: workspaceId,
-      source: ClickHouseEventSource.MOBILE
-    };
+    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
     await this.clickhouseClient.insertAsync({
       table: ClickHouseTable.EVENTS,
       values: [clickHouseRecord],
       format: 'JSONEachRow',
-    });
-
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      createdAt: new Date().toISOString(),
     });
 
     return customer._id;
@@ -1578,25 +1569,17 @@ export class EventsService {
       { upsert: true }
     );
 
-    const clickHouseRecord: ClickHouseEvent = {
-      correlationKey: event.correlationKey,
-      correlationValue: customer._id,
-      event: event.event,
-      payload: event.payload,
-      uuid: event.uuid,
-      workspace_id: workspaceId,
-      source: ClickHouseEventSource.MOBILE
-    };
+    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
     await this.clickhouseClient.insertAsync({
       table: ClickHouseTable.EVENTS,
       values: [clickHouseRecord],
       format: 'JSONEachRow',
-    });
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      createdAt: new Date().toISOString(),
     });
 
     return customer._id;
@@ -1681,5 +1664,29 @@ export class EventsService {
       default:
         return false;
     }
+  }
+
+  toClickHouseEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): ClickHouseEvent {
+    // Fields to be set by DB:
+    // created_at
+
+    const clickHouseRecord: ClickHouseEvent = {
+      uuid: event.uuid,
+      generated_at: event.timestamp || new Date(),
+      correlation_key: event.correlationKey,
+      correlation_value: customer ? customer._id : event.correlationValue,
+      event: event.event,
+      payload: event.payload,
+      context: event.context,
+      source: source,
+      workspace_id: workspaceId,
+    };
+
+    return clickHouseRecord;
   }
 }
