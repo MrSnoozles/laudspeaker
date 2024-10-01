@@ -28,7 +28,7 @@ describe("Audience->People Settings", () => {
       cy.get('button[type="submit"]').click();
       cy.url().should('not.include', '/login');
     });
-    
+
     cy.visit('/');
   });
 
@@ -52,13 +52,13 @@ describe("Audience->People Settings", () => {
         createCustomerKey("unique_attribute", "String", "", "", "Attribute duplication is not allowed!");
       });
 
-      // it("does not allow you to save an attribute with invalid characters", () => {
-      //   expect(() => createCustomerKey("a.dot_attribute", "String")).to.throw();
-      //   expect(() => createCustomerKey("a-dash_attribute", "String")).to.throw();
-      //   expect(() => createCustomerKey("a space_attribute", "String")).to.throw();
-      //   expect(() => createCustomerKey("$dollar_attribute", "String")).to.throw();
-      //   expect(() => createCustomerKey("special!@#$%^&*()_+,./<>?;:[]{}|\\", "String")).to.throw();
-      // });
+      it("does not allow you to save an attribute with invalid characters", () => {
+        createCustomerKey("a.dot_attribute", "String", "", "", "Invalid key name; keys must adhere to JSON key naming rules. See here for more information.");
+        createCustomerKey("a-dash_attribute", "String", "", "", "Invalid key name; keys must adhere to JSON key naming rules. See here for more information.");
+        createCustomerKey("a space_attribute", "String", "", "", "Invalid key name; keys must adhere to JSON key naming rules. See here for more information.");
+        // expect(() => createCustomerKey("$dollar_attribute", "String")).to.throw();
+        // expect(() => createCustomerKey("special!@#$%^&*()_+,./<>?;:[]{}|\\", "String")).to.throw();
+      });
 
       // it("does not allow you to save an attribute with a name longer than the maximum allowed length", () => {
       //   const longName = "a".repeat(256); // Assuming 255 is the max length
@@ -95,7 +95,7 @@ describe("Audience->People Settings", () => {
     // });
 
     // describe("Setting primary key", () => {
-    //   const validPrimaryKeyTypes = ["String", "Number", "Date", "Boolean", "Email", "Phone"];
+    //   const validPrimaryKeyTypes = ["String", "Number", "Email", "Phone"];
     //   validPrimaryKeyTypes.forEach(type => {
     //     it(`allows you to set a customer attribute of type ${type} as the primary key`, () => {
     //       const attributeName = `a_${type.toLowerCase()}_attribute`;
@@ -104,18 +104,18 @@ describe("Audience->People Settings", () => {
     //     });
     //   });
 
-    //   const invalidPrimaryKeyTypes = ["Array", "Object"];
-    //   invalidPrimaryKeyTypes.forEach(type => {
-    //     it(`does not allow you to set a customer attribute of type ${type} as the primary key`, () => {
-    //       const attributeName = `a_${type.toLowerCase()}_attribute`;
-    //       createCustomerKey(attributeName, type);
-    //       expect(() => setPrimaryKey(attributeName)).to.throw();
-    //     });
-    //   });
+      //   const invalidPrimaryKeyTypes = ["Array", "Object"];
+      //   invalidPrimaryKeyTypes.forEach(type => {
+      //     it(`does not allow you to set a customer attribute of type ${type} as the primary key`, () => {
+      //       const attributeName = `a_${type.toLowerCase()}_attribute`;
+      //       createCustomerKey(attributeName, type);
+      //       expect(() => setPrimaryKey(attributeName)).to.throw();
+      //     });
+      //   });
 
-    //   it("does not allow you to set a non-existent attribute as the primary key", () => {
-    //     expect(() => setPrimaryKey("non_existent_attribute")).to.throw();
-    //   });
+      //   it("does not allow you to set a non-existent attribute as the primary key", () => {
+      //     expect(() => setPrimaryKey("non_existent_attribute")).to.throw();
+      //   });
     // });
 
     // describe("Deleting customer attributes", () => {
