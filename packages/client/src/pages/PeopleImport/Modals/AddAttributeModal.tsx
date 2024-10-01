@@ -119,7 +119,7 @@ const AddAttributeModal = ({
   onAdded,
 }: AddAttributeModalProps) => {
   const [newName, setNewName] = useState("");
-  const [type, setType] = useState<AttributeType>();
+  const [selectedType, setSelectedType] = useState<AttributeType>();
   const [dateFormat, setDateFormat] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -148,23 +148,27 @@ const AddAttributeModal = ({
   };
 
   useEffect(() => {
-    if (isOpen) return;
+    if (isOpen) {
+      loadKeyParameters();
+      loadKeyTypes();
+      return;
+    }
 
     setNewName("");
-    setType(undefined);
+    setSelectedType(undefined);
     setDateFormat(undefined);
   }, [isOpen]);
 
   useEffect(() => {
     setDateFormat(undefined);
-  }, [type]);
+  }, [selectedType]);
 
   const handleSave = async () => {
     if (
-      !type ||
+      !selectedType ||
       !newName ||
       ([StatementValueType.DATE, StatementValueType.DATE_TIME].includes(
-        type.name as StatementValueType
+        selectedType.name as StatementValueType
       ) &&
         !dateFormat) ||
       isLoading
@@ -173,15 +177,15 @@ const AddAttributeModal = ({
 
     setIsLoading(true);
     try {
+      console.log(JSON.stringify(selectedType, null, 2));
       await ApiService.post({
         url: `/customers/attributes/create`,
         options: {
           name: newName.trim(),
-          type,
-          dateFormat,
+          attribute_type: selectedType,
         },
       });
-      onAdded(newName, type, dateFormat);
+      onAdded(newName, selectedType, dateFormat);
     } catch (error) {
       toast.error("Apply another type or name.");
     }
@@ -223,30 +227,32 @@ const AddAttributeModal = ({
             <div className="flex justify-between items-center">
               <span className="text-sm text-[#111827] font-inter">Type</span>
               <Select
-                value={type?.name}
+                value={selectedType?.name}
                 placeholder="Select type"
                 id="selectTypeInput"
                 className="max-w-[300px] w-full"
-                options={Object.values(possibleAttributeTypes).map((type) => ({
-                  key: type.name,
-                  title: type.name,
-                }))}
-                onChange={(type) =>
-                  setType(
+                options={Object.values(possibleAttributeTypes).map(
+                  (attrType) => ({
+                    key: attrType.name,
+                    title: attrType.name,
+                  })
+                )}
+                onChange={(typeName) =>
+                  setSelectedType(
                     possibleAttributeTypes.find((possibleType) => {
-                      return possibleType.name === type;
+                      return possibleType.name === typeName;
                     })
                   )
                 }
               />
             </div>
-            {type && type.parameters_required && (
+            {selectedType && selectedType.parameters_required && (
               <div
                 className="flex justify-between items-center mt-3"
                 id="dateFormatPicker"
               >
                 <span className="text-sm text-[#111827] font-inter">
-                  {type.name === "Date" ? "Date" : "Date-time"} format
+                  {selectedType.name === "Date" ? "Date" : "Date-time"} format
                 </span>
                 <DateFormatPicker
                   value={dateFormat || ""}
@@ -268,11 +274,11 @@ const AddAttributeModal = ({
             <Button
               disabled={
                 !newName ||
-                !type ||
+                !selectedType ||
                 ([
                   StatementValueType.DATE,
                   StatementValueType.DATE_TIME,
-                ].includes(type.name as StatementValueType) &&
+                ].includes(selectedType.name as StatementValueType) &&
                   !dateFormat) ||
                 isLoading
               }

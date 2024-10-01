@@ -4,7 +4,6 @@ import Select from "components/Elements/Selectv2";
 import RadioOption from "components/Radio/RadioOption";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import AddAttributeModal from "./Modals/AddAttributeModal";
 import { ImportAttribute, ImportParams, MappingParams } from "./PeopleImport";
@@ -63,22 +62,22 @@ const MappingTab = ({
       fileData?.primaryAttribute &&
       !Object.values(mappingSettings).find((el) => el.isPrimary)
     ) {
-      const pk = data.find((el) => el.isPrimary);
+      const pk = data.find((el) => el.is_primary);
       if (
-        fileData?.primaryAttribute.key === pk.key &&
-        fileData?.primaryAttribute.type === pk.type
+        pk &&
+        fileData?.primaryAttribute.key === pk.name &&
+        fileData?.primaryAttribute.type === pk.attribute_type.name
       ) {
         const suggestedFieldForPK = Object.keys(fileData.headers).find(
-          (el: string) => el.toLowerCase().includes(pk.key.toLowerCase())
+          (el: string) => el.toLowerCase().includes(pk.name.toLowerCase())
         );
         if (suggestedFieldForPK) {
           updateSettings({
             [suggestedFieldForPK]: {
               ...mappingSettings[suggestedFieldForPK],
               asAttribute: {
-                key: pk.key,
-                type: pk.type,
-                dateFormat: pk.dateFormat,
+                key: pk.name,
+                type: pk.attribute_type.name,
                 skip: false,
               },
               isPrimary: true,
@@ -88,7 +87,14 @@ const MappingTab = ({
       }
     }
 
-    setPossibleKeys(data);
+    // Transform the data to match the expected format
+    const transformedData = data.map((item) => ({
+      key: item.name,
+      type: item.attribute_type.name,
+      isPrimary: item.is_primary,
+    }));
+
+    setPossibleKeys(transformedData);
   };
 
   const loadKeyTypes = async () => {
