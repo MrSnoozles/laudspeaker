@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import AddAttributeModal from "./Modals/AddAttributeModal";
 import { ImportAttribute, ImportParams, MappingParams } from "./PeopleImport";
-import { AttributeType } from "pages/PeopleSettings/PeopleSettings";
+import { Attribute, AttributeType } from "pages/PeopleSettings/PeopleSettings";
 
 interface MappingTabProps {
   fileData?: ImportParams;
@@ -28,12 +28,8 @@ const MappingTab = ({
     Record<string, { search: string; isLoading: boolean }>
   >({});
   const [activeHead, setActiveHead] = useState<string>();
-  const [possibleKeys, setPossibleKeys] = useState<
-    { key: string; type: AttributeType; dateFormat?: string }[]
-  >([]);
-  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
-    AttributeType[]
-  >([]);
+  const [possibleKeys, setPossibleKeys] = useState<Attribute[]>([]);
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<AttributeType[]>([]);
 
   const handleSearchUpdate = (head: string) => (value: string) => {
     const newSearch = { ...search };
@@ -65,8 +61,8 @@ const MappingTab = ({
       const pk = data.find((el) => el.is_primary);
       if (
         pk &&
-        fileData?.primaryAttribute.key === pk.name &&
-        fileData?.primaryAttribute.type === pk.attribute_type.name
+        fileData?.primaryAttribute.name === pk.name &&
+        fileData?.primaryAttribute.attribute_type.name === pk.attribute_type.name
       ) {
         const suggestedFieldForPK = Object.keys(fileData.headers).find(
           (el: string) => el.toLowerCase().includes(pk.name.toLowerCase())
@@ -76,8 +72,7 @@ const MappingTab = ({
             [suggestedFieldForPK]: {
               ...mappingSettings[suggestedFieldForPK],
               asAttribute: {
-                key: pk.name,
-                type: pk.attribute_type.name,
+                attribute: pk,
                 skip: false,
               },
               isPrimary: true,
@@ -87,14 +82,13 @@ const MappingTab = ({
       }
     }
 
-    // Transform the data to match the expected format
     const transformedData = data.map((item) => ({
       key: item.name,
       type: item.attribute_type.name,
       isPrimary: item.is_primary,
     }));
 
-    setPossibleKeys(transformedData);
+    setPossibleKeys(data);
   };
 
   const loadKeyTypes = async () => {
@@ -122,7 +116,7 @@ const MappingTab = ({
       ) &&
       type !== "_SKIP_RECORD_"
     ) {
-      toast.error("This attribute already in use");
+      toast.error("This attribute is already in use!");
       return;
     }
 
@@ -135,7 +129,6 @@ const MappingTab = ({
             possibleAttributeTypes.find((possibleType) => {
               return possibleType.name === type;
             }) || possibleAttributeTypes[0],
-          dateFormat,
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
         isPrimary:
@@ -193,12 +186,13 @@ const MappingTab = ({
 
   const isProperAttribute = (head: string) =>
     !!mappingSettings[head]?.asAttribute &&
-    mappingSettings[head].asAttribute?.key !== "_SKIP_RECORD_";
+    mappingSettings[head].asAttribute?. !== "_SKIP_RECORD_";
 
   const primaryKey = Object.values(mappingSettings).find((el) => el.isPrimary);
 
   useEffect(() => {
     loadPossibleKeys();
+    loadKeyTypes();
   }, []);
 
   return (
@@ -212,8 +206,8 @@ const MappingTab = ({
       <div className="mt-5 flow-root max-h-[calc(100vh-480px)] overflow-y-auto">
         <RadioGroup
           value={
-            primaryKey?.asAttribute?.key
-              ? `${primaryKey.asAttribute.key};-;${primaryKey.asAttribute.type}`
+            primaryKey?.asAttribute?.attribute
+              ? `${primaryKey.asAttribute.attribute.name};-;${primaryKey.asAttribute.attribute.attribute_type.name}`
               : ""
           }
           onChange={handlePrimaryKeyChange}
@@ -304,9 +298,7 @@ const MappingTab = ({
                             mappingSettings[head]?.asAttribute
                               ? `${mappingSettings[head].asAttribute!.key};-;${
                                   mappingSettings[head].asAttribute!.type
-                                };-;${
-                                  mappingSettings[head].asAttribute?.dateFormat
-                                }`
+                                };-;`
                               : ""
                           }
                           searchValue={search[head]?.search || ""}
@@ -474,7 +466,6 @@ const MappingTab = ({
               asAttribute: {
                 key: keyName,
                 type: keyType,
-                dateFormat,
                 skip: false,
               },
             },
