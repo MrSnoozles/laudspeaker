@@ -54,30 +54,69 @@ export default function () {
       name: "mahamad",
     },
   };
+  const batch_max = 250;
+  const events = [];
+
+  let event_names = ["event", "example", "test", "upload", "checkouPmt"];
+  let r_num;
+
+  let event;
+
+  let customer;
+
+  const customers = [
+      "ffffcac5-332e-46fe-9f1f-ddb9889395d2",
+      "ffffadb5-e52c-450a-ac20-e8a20bcc9ddb"
+    ];
+
+  const dateMin = -5;
+  const dateMax = 5;
+  let daysAgo;
+
+  for(let i = 0; i < batch_max; i++) {
+    r_num = Math.floor(Math.random() * 1000);
+    event = `${event_names[Math.floor(Math.random() * event_names.length)]}-${r_num}`;
+
+    customer = customers[Math.floor(Math.random() * customers.length)];
+
+    daysAgo = Math.floor(
+      Math.random() * (dateMax - dateMin + 1) +
+        dateMin
+    );
+
+    var d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+
+    const uuid = uuidv4();
+
+    events.push(`{
+      "timestamp": "${d.toISOString()}",
+      "uuid": "${uuid}",
+      "event": "${event}",
+      "source": "mobile",
+      "correlationKey": "_id",
+      "correlationValue": "${customer}",
+    }`)
+  }
+
+  // console.log(event);
   let temp_id = uuidv4();
   let res = http.post(
     //"correlationValue": "${temp_id}"
     // 'https://api.laudspeaker.com/customers/upsert',
-    "https://test-laudspeaker.laudtest.com/api/events/batch",
+    "http://localhost:3001/events/batch",
     `{
-      "batch": [
-      {
-        "timestamp": "2024-03-15T02:31:05.295Z",
-        "uuid": "F451DF0A-D713-4076-AE20-41AB1641BC98",
-        "event": "example1",
-        "source": "mobile",
-        "correlationKey": "_id",
-        "correlationValue": "910af624-dee0-49bc-8765-f17f1f1de052"
-      }
-    ]
-  }`,
+      "batch": [${events}]
+    }`,
     {
       headers: {
-        Authorization: "Api-Key IHhUY1y9OcErRjVHksRORcPvND6KMV1v4tJkSXQJ",
+        Authorization: "Api-Key fqz9AdCYDzMt2mK2oCnbs32jUafiYr1T8kF5vhl2",
         "Content-Type": "application/json",
       },
     }
   );
+
+  // consl
 
   // console.log(JSON.stringify(res, null, 2))
   // sleep(1);

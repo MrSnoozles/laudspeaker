@@ -9,18 +9,18 @@ import {
 export class MigrateEventsFromMongoToClickhouse1727222269995 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      const lib = await import('mongoose');
+      debugger
+      console.log(`RMQ_CONNECTION_URI: ${process.env.RMQ_CONNECTION_URI}`);
+      try {
+        const lib = require('mongoose');
 
-      if (lib) {
         const mongoose = new lib.Mongoose();
         await this.migrateEvents(queryRunner, mongoose);
         console.log("Events have been successfully migrated from MongoDB to Clickhouse");
-      }
-      else {
+
+      } catch(err) {
         console.log("mongoose not found. Skipping migrating events from MongoDB to Clickhouse");
       }
-
-      throw new Error("ERR");
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -64,7 +64,6 @@ export class MigrateEventsFromMongoToClickhouse1727222269995 implements Migratio
           created_at: event.createdAt,
           event: event.event,
           payload: event.payload,
-          context: event.context,
           source: event.source,
           workspace_id: event.workspaceId,
         };
