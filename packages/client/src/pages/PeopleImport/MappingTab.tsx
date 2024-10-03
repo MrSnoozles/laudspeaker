@@ -29,7 +29,9 @@ const MappingTab = ({
   >({});
   const [activeHead, setActiveHead] = useState<string>();
   const [possibleKeys, setPossibleKeys] = useState<Attribute[]>([]);
-  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<AttributeType[]>([]);
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
+    AttributeType[]
+  >([]);
 
   const handleSearchUpdate = (head: string) => (value: string) => {
     const newSearch = { ...search };
@@ -62,7 +64,8 @@ const MappingTab = ({
       if (
         pk &&
         fileData?.primaryAttribute.name === pk.name &&
-        fileData?.primaryAttribute.attribute_type.name === pk.attribute_type.name
+        fileData?.primaryAttribute.attribute_type.name ===
+          pk.attribute_type.name
       ) {
         const suggestedFieldForPK = Object.keys(fileData.headers).find(
           (el: string) => el.toLowerCase().includes(pk.name.toLowerCase())
@@ -112,7 +115,8 @@ const MappingTab = ({
     if (
       Object.values(mappingSettings).some(
         (el) =>
-          el.asAttribute?.key === key && el.asAttribute?.type.name === type
+          el.asAttribute?.attribute.name === key &&
+          el.asAttribute?.attribute.attribute_type.name === type
       ) &&
       type !== "_SKIP_RECORD_"
     ) {
@@ -124,22 +128,24 @@ const MappingTab = ({
       [head]: {
         ...mappingSettings[head],
         asAttribute: {
-          key: key,
-          type:
-            possibleAttributeTypes.find((possibleType) => {
-              return possibleType.name === type;
-            }) || possibleAttributeTypes[0],
+          attribute:
+            possibleKeys.find((possibleKey) => {
+              return (
+                possibleKey.name === key &&
+                possibleKey.attribute_type.name === type
+              );
+            }) || possibleKeys[0],
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
         isPrimary:
           selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_" ||
           (fileData?.primaryAttribute &&
-            fileData?.primaryAttribute.key !== key &&
-            fileData?.primaryAttribute.type.name !== type)
+            fileData?.primaryAttribute.name !== key &&
+            fileData?.primaryAttribute.attribute_type.name !== type)
             ? false
             : fileData?.primaryAttribute &&
-              fileData?.primaryAttribute.key === key &&
-              fileData?.primaryAttribute.type.name === type
+              fileData?.primaryAttribute.name === key &&
+              fileData?.primaryAttribute.attribute_type.name === type
             ? true
             : mappingSettings[head].isPrimary,
       },
@@ -161,8 +167,8 @@ const MappingTab = ({
 
     Object.keys(mappingSettings).forEach((el) => {
       if (
-        newSettings[el].asAttribute?.key === key &&
-        newSettings[el].asAttribute?.type.name === type
+        newSettings[el].asAttribute?.attribute.name === key &&
+        newSettings[el].asAttribute?.attribute.attribute_type.name === type
       ) {
         newSettings[el].isPrimary = true;
         newSettings[el].doNotOverwrite = true;
@@ -186,7 +192,7 @@ const MappingTab = ({
 
   const isProperAttribute = (head: string) =>
     !!mappingSettings[head]?.asAttribute &&
-    mappingSettings[head].asAttribute?. !== "_SKIP_RECORD_";
+    !mappingSettings[head].asAttribute?.skip;
 
   const primaryKey = Object.values(mappingSettings).find((el) => el.isPrimary);
 
@@ -296,9 +302,13 @@ const MappingTab = ({
                         <Select
                           value={
                             mappingSettings[head]?.asAttribute
-                              ? `${mappingSettings[head].asAttribute!.key};-;${
-                                  mappingSettings[head].asAttribute!.type
-                                };-;`
+                              ? `${
+                                  mappingSettings[head].asAttribute!.attribute
+                                    .name
+                                };-;${
+                                  mappingSettings[head].asAttribute!.attribute
+                                    .attribute_type.name
+                                }`
                               : ""
                           }
                           searchValue={search[head]?.search || ""}
@@ -381,11 +391,11 @@ const MappingTab = ({
                             },
                             ...possibleKeys
                               .filter((el) =>
-                                el.key.includes(search[head]?.search || "")
+                                el.name.includes(search[head]?.search || "")
                               )
                               .map((el) => ({
-                                key: `${el.key};-;${el.type};-;${el.dateFormat}`,
-                                title: el.key,
+                                key: `${el.name};-;${el.attribute_type.name}`,
+                                title: el.name,
                               })),
                           ]}
                           placeholder={"Select an attribute"}
@@ -406,9 +416,11 @@ const MappingTab = ({
                             value={
                               mappingSettings[head]?.asAttribute
                                 ? `${
-                                    mappingSettings[head]!.asAttribute!.key
+                                    mappingSettings[head]!.asAttribute!
+                                      .attribute.name
                                   };-;${
-                                    mappingSettings[head]!.asAttribute!.type
+                                    mappingSettings[head]!.asAttribute!
+                                      .attribute.attribute_type.name
                                   }`
                                 : "-1"
                             }
@@ -464,8 +476,10 @@ const MappingTab = ({
             [activeHead]: {
               ...mappingSettings[activeHead],
               asAttribute: {
-                key: keyName,
-                type: keyType,
+                attribute:
+                  possibleKeys.find((key) => {
+                    return key.name === keyName;
+                  }) || possibleKeys[0],
                 skip: false,
               },
             },
