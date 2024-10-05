@@ -85,12 +85,6 @@ const MappingTab = ({
       }
     }
 
-    const transformedData = data.map((item) => ({
-      key: item.name,
-      type: item.attribute_type.name,
-      isPrimary: item.is_primary,
-    }));
-
     setPossibleKeys(data);
   };
 
@@ -167,8 +161,8 @@ const MappingTab = ({
 
     Object.keys(mappingSettings).forEach((el) => {
       if (
-        newSettings[el].asAttribute?.attribute.name === key &&
-        newSettings[el].asAttribute?.attribute.attribute_type.name === type
+        newSettings[el].asAttribute?.attribute?.name === key &&
+        newSettings[el].asAttribute?.attribute?.attribute_type.name === type
       ) {
         newSettings[el].isPrimary = true;
         newSettings[el].doNotOverwrite = true;
@@ -301,7 +295,7 @@ const MappingTab = ({
                       >
                         <Select
                           value={
-                            mappingSettings[head]?.asAttribute
+                            mappingSettings[head]?.asAttribute?.attribute
                               ? `${
                                   mappingSettings[head].asAttribute!.attribute
                                     .name
@@ -414,7 +408,7 @@ const MappingTab = ({
                         >
                           <RadioOption
                             value={
-                              mappingSettings[head]?.asAttribute
+                              mappingSettings[head]?.asAttribute?.attribute
                                 ? `${
                                     mappingSettings[head]!.asAttribute!
                                       .attribute.name

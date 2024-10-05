@@ -285,8 +285,8 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
     if (
       Object.values(mappingSettings).some(
         (el) =>
-          !el.asAttribute?.attribute.name ||
-          !el.asAttribute?.attribute.attribute_type.name
+          !el.asAttribute?.attribute?.name ||
+          !el.asAttribute?.attribute?.attribute_type.name
       )
     ) {
       errors.push(ValidationError.UNMAPPED_ATTRIBUTES);

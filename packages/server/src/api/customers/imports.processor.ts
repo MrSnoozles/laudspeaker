@@ -122,7 +122,7 @@ export class ImportProcessor extends ProcessorBase {
               if (isSkipped) return;
               const convertResult = this.customersService.convertForImport(
                 data[el],
-                clearedMapping[el].asAttribute.type,
+                clearedMapping[el].asAttribute.attribute.attribute_type.name,
                 el,
                 clearedMapping[el].asAttribute.dateFormat
               );
@@ -143,14 +143,14 @@ export class ImportProcessor extends ProcessorBase {
             Object.keys(clearedMapping).forEach((el) => {
               if (clearedMapping[el].doNotOverwrite) {
                 delete filteredUpdateOptions[
-                  clearedMapping[el].asAttribute.key
+                  clearedMapping[el].asAttribute.attribute.name
                 ];
               }
               if (
-                convertedRecord[clearedMapping[el].asAttribute.key] &&
-                filteredUpdateOptions?.[clearedMapping?.[el].asAttribute.key]
+                convertedRecord[clearedMapping[el].asAttribute.attribute.name] &&
+                filteredUpdateOptions?.[clearedMapping?.[el].asAttribute.attribute.name]
               ) {
-                delete convertedRecord[clearedMapping[el].asAttribute.key];
+                delete convertedRecord[clearedMapping[el].asAttribute.attribute.name];
               }
             });
             batch.push({
@@ -173,7 +173,7 @@ export class ImportProcessor extends ProcessorBase {
               this.processImportRecord(
                 account,
                 settings.importOption,
-                passedPK.asAttribute.key,
+                passedPK.asAttribute.attribute.name,
                 batch,
                 segmentId,
                 session
@@ -210,7 +210,7 @@ export class ImportProcessor extends ProcessorBase {
                   await this.processImportRecord(
                     account,
                     settings.importOption,
-                    passedPK.asAttribute.key,
+                    passedPK.asAttribute.attribute.name,
                     batch,
                     segmentId,
                     session
@@ -274,13 +274,27 @@ export class ImportProcessor extends ProcessorBase {
 
     const organization = account?.teams?.[0]?.organization;
     const workspace = organization?.workspaces?.[0];
-    
+
+
     const foundExisting = await this.customersRepository
-    .createQueryBuilder("customer")
-    .where("customer.workspaceId = :workspaceId", { workspaceId: workspace.id })
-    .andWhere(`customer.user_attributes.${pkKey} IN (:...keys)`, { keys: withoutDuplicateKeys })
-    .getMany();
-  
+      .createQueryBuilder("customer")
+      .where("customer.workspace = :workspaceId", { workspaceId: workspace.id })
+      .andWhere(`customer.user_attributes ->> ${pkKey} IN (:...keys)`, { keys: withoutDuplicateKeys })
+      .getMany();
+
+
+    // this.customersRepository
+    // .createQueryBuilder("customer")
+    // .select([`customer.user_attributes ->> :key AS key`])//, "COUNT(*) AS count"])
+    // .addSelect("array_agg(customer.id) AS docs")  // Aggregate by customer IDs instead of the full customer object
+    // .where("customer.workspace = :workspaceId", { workspaceId })
+    // .andWhere("(customer.system_attributes ->> 'is_anonymous')::boolean = false")
+    // .groupBy(`1`)//customer.user_attributes ->> :key`)
+    // // .having("COUNT(*) > 1")
+    // .setParameter("key", key)
+    // .limit(2)
+    // .getRawMany();
+
 
     const existing = foundExisting.map((el) => el.user_attributes[pkKey]);
 
