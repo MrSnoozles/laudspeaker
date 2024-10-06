@@ -279,22 +279,8 @@ export class ImportProcessor extends ProcessorBase {
     const foundExisting = await this.customersRepository
       .createQueryBuilder("customer")
       .where("customer.workspace = :workspaceId", { workspaceId: workspace.id })
-      .andWhere(`customer.user_attributes ->> ${pkKey} IN (:...keys)`, { keys: withoutDuplicateKeys })
+      .andWhere(`customer.user_attributes ->> :pkKey IN (:...keys)`, { pkKey, keys: withoutDuplicateKeys })
       .getMany();
-
-
-    // this.customersRepository
-    // .createQueryBuilder("customer")
-    // .select([`customer.user_attributes ->> :key AS key`])//, "COUNT(*) AS count"])
-    // .addSelect("array_agg(customer.id) AS docs")  // Aggregate by customer IDs instead of the full customer object
-    // .where("customer.workspace = :workspaceId", { workspaceId })
-    // .andWhere("(customer.system_attributes ->> 'is_anonymous')::boolean = false")
-    // .groupBy(`1`)//customer.user_attributes ->> :key`)
-    // // .having("COUNT(*) > 1")
-    // .setParameter("key", key)
-    // .limit(2)
-    // .getRawMany();
-
 
     const existing = foundExisting.map((el) => el.user_attributes[pkKey]);
 
@@ -303,14 +289,18 @@ export class ImportProcessor extends ProcessorBase {
       .map((el) => {
         return data.find((el2) => el2.pkKeyValue === el);
       })
-      .map((el) => ({
-        _id: randomUUID(),
-        createdAt: new Date(),
-        workspaceId: workspace.id,
-        [pkKey]: el.pkKeyValue,
-        ...el.create,
-        ...el.update,
-      }));
+      .map((el) => {
+        const cust = new Customer();
+        cust.created_at = new Date();
+        cust.workspace = workspace;
+        cust.user_attributes = {
+          [pkKey]: el.pkKeyValue,
+          ...el.create,
+          ...el.update,
+        }
+        return cust;
+      }
+      );
 
     await this.customersService.checkCustomerLimit(
       organization,
@@ -322,14 +312,11 @@ export class ImportProcessor extends ProcessorBase {
     if (importOption === ImportOptions.NEW) {
       try {
         const insertedResults = null;
-        // TODO
-        // await this.CustomerModel.insertMany(toCreate, {
-        //   ordered: false,
-        // });
+        await this.customersRepository.save(toCreate)
 
         if (segmentId)
           addToSegment.push(
-            ...insertedResults.map((doc) => doc._id.toString())
+            ...insertedResults.map((doc) => doc.id.toString())
           );
       } catch (error) {
         this.error(

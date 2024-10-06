@@ -290,6 +290,7 @@ const Personv2 = () => {
   };
 
   useEffect(() => {
+    loadKeyTypes();
     loadData();
   }, []);
 
