@@ -18,6 +18,8 @@ import { JourneyLocationsService } from './journey-locations.service';
 import { JourneyChange } from './entities/journey-change.entity';
 import { CacheService } from '../../common/services/cache.service';
 import { JourneyStatisticsService } from './journey-statistics.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { EventSchema, Event } from '../events/schemas/event.schema';
 
 @Module({
   imports: [
@@ -30,6 +32,9 @@ import { JourneyStatisticsService } from './journey-statistics.service';
       Journey,
       JourneyLocation,
       JourneyChange,
+    ]),
+    MongooseModule.forFeature([
+      { name: Event.name, schema: EventSchema },
     ]),
     forwardRef(() => CustomersModule),
     forwardRef(() => StepsModule),
@@ -46,4 +51,4 @@ import { JourneyStatisticsService } from './journey-statistics.service';
   ],
   exports: [JourneysService],
 })
-export class JourneysModule {}
+export class JourneysModule { }

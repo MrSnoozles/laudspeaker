@@ -18,10 +18,6 @@ import { JourneyLocation } from '../../journeys/entities/journey-location.entity
 import { Processor } from '../../../common/services/queue/decorators/processor';
 import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
 import { Customer } from '../../customers/entities/customer.entity';
-import { Journey } from '@/api/journeys/entities/journey.entity';
-import { JourneyLocation } from '@/api/journeys/entities/journey-location.entity';
-import { Processor } from '@/common/services/queue/decorators/processor';
-import { ProcessorBase } from '@/common/services/queue/classes/processor-base';
 
 @Injectable()
 @Processor('exit.step')
