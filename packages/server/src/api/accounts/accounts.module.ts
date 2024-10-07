@@ -14,6 +14,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationPlan } from '../organizations/entities/organization-plan.entity';
+import { ChannelsModule } from '../channels/channels.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { OrganizationPlan } from '../organizations/entities/organization-plan.en
     forwardRef(() => JourneysModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => StepsModule),
+    forwardRef(() => ChannelsModule),
     WebhooksModule,
   ],
   controllers: [AccountsController],

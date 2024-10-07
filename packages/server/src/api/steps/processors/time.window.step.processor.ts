@@ -22,6 +22,7 @@ import { ProcessorBase } from '../../../common/services/queue/classes/processor-
 import { QueueType } from '../../../common/services/queue/types/queue-type';
 import { Producer } from '../../../common/services/queue/classes/producer';
 import { Customer } from '../../customers/entities/customer.entity';
+import { CacheConstants } from '@/common/services/cache.constants';
 
 @Injectable()
 @Processor('time.window.step')
@@ -167,7 +168,7 @@ export class TimeWindowStepProcessor extends ProcessorBase {
         }
         if (moveCustomer) {
           nextStep = await this.cacheService.getIgnoreError(
-            Step,
+            CacheConstants.STEPS,
             job.data.step.metadata.destination,
             async () => {
               return await this.stepsService.lazyFindByID(

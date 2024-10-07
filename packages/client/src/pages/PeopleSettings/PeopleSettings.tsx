@@ -14,6 +14,7 @@ import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import Account, { UserPK } from "types/Account";
 import * as uuid from "uuid";
+import { setUserSchemaSetupped } from "reducers/onboarding.reducer";
 
 //TODO: Shared NPM module with these types (Attribute, AttributeType, and AttributeParameter)
 export interface Attribute {
@@ -202,6 +203,8 @@ const PeopleSettings = () => {
         });
 
         toast.success("Primary Key Updated!");
+        // Dispatch the action to update userSchemaSetupped
+        dispatch(setUserSchemaSetupped(true));
       } catch (error) {
         if (error instanceof AxiosError)
           toast.error(

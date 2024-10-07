@@ -62,6 +62,7 @@ import { StepsHelper } from '../steps/steps.helper';
 import { AttributeTypeName } from './entities/attribute-type.entity';
 import { CustomerKeysService } from './customer-keys.service';
 import { CustomerKey } from './entities/customer-keys.entity';
+import { CacheConstants } from '@/common/services/cache.constants';
 
 export type Correlation = {
   cust: Customer;
@@ -3664,7 +3665,7 @@ export class CustomersService {
   ): Promise<CustomerKey> {
     let primaryKey: CustomerKey =
       await this.cacheService.getIgnoreError(
-        'PrimaryKey',
+        CacheConstants.PRIMARY_KEYS,
         workspaceId,
         async () => {
           return await this.customerKeysService.getPrimaryKey(workspaceId, session);

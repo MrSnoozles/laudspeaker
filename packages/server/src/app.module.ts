@@ -54,6 +54,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { HealthCheckService } from './app.healthcheck.service';
 import { QueueModule } from './common/services/queue/queue.module';
 import { ClickHouseModule } from './common/services/clickhouse/clickhouse.module';
+import { ChannelsModule } from './api/channels/channels.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -255,6 +256,7 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     RedlockModule,
     RavenModule,
     OrganizationsModule,
+    ChannelsModule,
   ],
   controllers: [AppController],
   providers: getProvidersList(),

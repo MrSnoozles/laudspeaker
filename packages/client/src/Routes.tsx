@@ -872,6 +872,18 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/settings/sms/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <TwilioSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/settings/push/:id"
           element={
             <Protected>
