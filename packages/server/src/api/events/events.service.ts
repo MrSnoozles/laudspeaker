@@ -1252,12 +1252,11 @@ export class EventsService {
           session,
           auth.account.id
         );
-        //console.log("found customers primary key", customer.primaryKeyName, "does not match event primary key", primaryKeyValue )
         return;
       }
     }
 
-    if (customer._id !== event.correlationValue) {
+    if (customer.uuid !== event.correlationValue) {
       await this.deduplication(
         customer,
         event.correlationValue,

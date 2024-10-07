@@ -63,9 +63,9 @@ const MappingTab = ({
       const pk = data.find((el) => el.is_primary);
       if (
         pk &&
-        fileData?.primaryAttribute.name === pk.name &&
-        fileData?.primaryAttribute.attribute_type.name ===
-          pk.attribute_type.name
+        fileData?.primaryAttribute?.name === pk?.name &&
+        fileData?.primaryAttribute?.attribute_type?.name ===
+          pk?.attribute_type?.name
       ) {
         const suggestedFieldForPK = Object.keys(fileData.headers).find(
           (el: string) => el.toLowerCase().includes(pk.name.toLowerCase())

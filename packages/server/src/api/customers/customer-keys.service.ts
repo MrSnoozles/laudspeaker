@@ -104,13 +104,15 @@ export class CustomerKeysService {
       return await queryRunner.manager.find(CustomerKey, {
         where: {
           workspace: { id: workspaceId }
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     } else {
       return await this.customerKeysRepository.find({
         where: {
           workspace: { id: workspaceId }
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     }
   }
