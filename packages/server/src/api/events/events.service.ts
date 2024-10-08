@@ -41,7 +41,7 @@ import { ProviderType } from './processors/events.preprocessor';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
-import { MobileBatchDto } from './dto/mobile-batch.dto';
+import { BatchEventDto } from './dto/batch-event.dto';
 import e from 'express';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { Liquid } from 'liquidjs';
@@ -56,6 +56,7 @@ import { ClickHouseMessage } from '../../common/services/clickhouse/interfaces/c
 import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
+import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '@/common/services/clickhouse';
 
 @Injectable()
 export class EventsService {
@@ -78,6 +79,10 @@ export class EventsService {
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
     @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(forwardRef(() => JourneysService))
+    private readonly journeysService: JourneysService,
+    @Inject(ClickHouseClient)
+    private clickhouseClient: ClickHouseClient,
   ) {
     this.tagEngine.registerTag('api_call', {
       parse(token) {
@@ -411,7 +416,6 @@ export class EventsService {
   /*
    *
    * Retrieves a number of events for the user to see in the event tracker
-   * uses mongo aggregation
    */
   async getCustomEvents(
     account: Account,
@@ -425,13 +429,6 @@ export class EventsService {
     return Sentry.startSpan(
       { name: 'EventsService.getCustomEvents' },
       async () => {
-        this.debug(
-          ` in customEvents`,
-          this.getCustomEvents.name,
-          session,
-          account.id
-        );
-
         const result = await this.getCustomEventsCursorSearch(
           account,
           session,
@@ -463,7 +460,7 @@ export class EventsService {
     // on the direction
     ({ anchor, direction, cursorEventId } =
       this.computeCustomEventsQueryVariables(anchor, direction, cursorEventId));
-    const { filter, sort, limit } = this.prepareCustomEventsQuery(
+    const { query } = this.prepareCustomEventsQuery(
       account,
       pageSize,
       search,
@@ -472,11 +469,7 @@ export class EventsService {
       cursorEventId
     );
 
-    const customEvents = await this.executeCustomEventsQuery(
-      filter,
-      sort,
-      limit
-    );
+    const customEvents = await this.executeCustomEventsQuery(query);
 
     var resultSetHasMoreThanPageSize = false;
 
@@ -508,9 +501,9 @@ export class EventsService {
     var showPrevCursorEventId = '';
 
     if (showNext)
-      showNextCursorEventId = customEvents[customEvents.length - 1]._id;
+      showNextCursorEventId = customEvents[customEvents.length - 1].id;
 
-    if (showPrev) showPrevCursorEventId = customEvents[0]._id;
+    if (showPrev) showPrevCursorEventId = customEvents[0].id;
 
     const filteredCustomEvents =
       this.filterCustomEventsAttributes(customEvents);
@@ -563,82 +556,56 @@ export class EventsService {
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const filter = {
-      workspaceId: workspace.id,
-    };
+    let filter = `workspace_id = '${workspace.id}'`;
 
     if (search !== '') {
-      const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-      filter['event'] = searchRegExp;
-
-      // disable the use of text index until autocomplete is implemented
-      // text search supports whole word search only
-      // const searchObj = {
-      //   $search: `"${search}"`,
-      //   $caseSensitive: false
-      // }
-
-      // filter["$text"] = searchObj;
+      filter += ` AND event ILIKE '%${search}%'`;
     }
 
-    // default sort is most recent events first (_id desc)
-    const sort: Record<string, SortOrder> = {
-      _id: -1,
-    };
+    let sort = 'ORDER BY id DESC';
+    let cursorCondition = '';
 
-    // next page should find events with id < last event id on current page
     if (direction == 1) {
       if (cursorEventId != '')
-        filter['_id'] = { $lt: new mongoose.Types.ObjectId(cursorEventId) };
-    }
-    // previous page should find the first events with id > first event id on current page
-    else {
+        cursorCondition = ` AND id < ${cursorEventId}`;
+    } else {
       if (cursorEventId != '')
-        filter['_id'] = { $gt: new mongoose.Types.ObjectId(cursorEventId) };
-      sort['_id'] = 1;
+        cursorCondition = ` AND id > ${cursorEventId}`;
+      sort = 'ORDER BY id ASC';
     }
 
-    // fetch one more to find out if there is a next page
-    // if direction == 1, then next page is ->
     const limit = pageSize + 1;
 
-    const query = {
-      filter,
-      sort,
-      limit,
-    };
+    const query = `
+      SELECT *
+      FROM events
+      WHERE ${filter}${cursorCondition}
+      ${sort}
+      LIMIT ${limit}
+    `;
 
-    return query;
+    return { query };
   }
 
-  async executeCustomEventsQuery(
-    filter: Record<string, any>,
-    sort: Record<string, SortOrder>,
-    limit: number
-  ) {
-    const projection = {};
 
-    const result = await this.EventModel.find(filter, projection)
-      .sort(sort)
-      .limit(limit)
-      .lean()
-      .exec();
-
-    const parsedResult = this.parseCustomEventsQueryResult(result);
-
+  async executeCustomEventsQuery(query: string) {
+    const result = await this.clickhouseClient.query({ query });
+    const events = await result.json<any>();
+    const parsedResult = this.parseCustomEventsQueryResult(events.data);
     return parsedResult;
   }
 
   parseCustomEventsQueryResult(result) {
     for (var i = 0; i < result.length; i++) {
-      result[i]._id = result[i]._id.toString();
+      result[i].id = result[i].id.toString();
     }
 
     return result;
   }
 
+
   filterCustomEventsAttributes(customEvents) {
-    const attributesToRemove = ['_id', 'workspaceId'];
+    const attributesToRemove = ['id', 'workspaceId'];
 
     for (const attribute of attributesToRemove) {
       for (var i = 0; i < customEvents.length; i++) {
@@ -943,13 +910,13 @@ export class EventsService {
 
   async batch(
     auth: { account: Account; workspace: Workspaces },
-    MobileBatchDto: MobileBatchDto,
+    eventBatch: BatchEventDto,
     session: string
   ) {
     return Sentry.startSpan({ name: 'EventsService.batch' }, async () => {
       let err: any;
       try {
-        for (const thisEvent of MobileBatchDto.batch) {
+        for (const thisEvent of eventBatch.batch) {
           if (
             thisEvent.source === 'message' &&
             thisEvent.event === '$delivered'
@@ -1081,14 +1048,12 @@ export class EventsService {
       session
     );
 
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      //we should really standardize on .toISOString() or .toUTCString()
-      //createdAt: new Date().toUTCString(),
-      createdAt: new Date().toISOString(),
-    });
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
 
     return customer._id;
   }
@@ -1319,12 +1284,12 @@ export class EventsService {
       },
       session);
 
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      createdAt: new Date().toISOString(),
-    });
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
 
     return customer.id;
   }
@@ -1377,7 +1342,6 @@ export class EventsService {
         },
         session
       );
-
     return updatedCustomer;
   }
 
@@ -1403,5 +1367,79 @@ export class EventsService {
       default:
         return false;
     }
+  }
+
+  async getNewEventPayloadAttributes(clickHouseRecord: ClickHouseEvent) {
+
+  }
+
+  async createMaterializedColumnsForEventPayload(clickHouseRecord: ClickHouseEvent) {
+
+
+  }
+
+  async recordEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = await this.insertEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    const newEventPayloadAttributes = await this.getNewEventPayloadAttributes(clickHouseRecord);
+    await this.createMaterializedColumnsForEventPayload(clickHouseRecord);
+
+    return clickHouseRecord;
+  }
+
+  async insertEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    await this.clickhouseClient.insertAsync({
+      table: ClickHouseTable.EVENTS,
+      values: [clickHouseRecord],
+      format: 'JSONEachRow',
+    });
+
+    return clickHouseRecord;
+  }
+
+  toClickHouseEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): ClickHouseEvent {
+    // Fields to be set by DB:
+    // created_at
+
+    const clickHouseRecord: ClickHouseEvent = {
+      uuid: event.uuid,
+      generated_at: event.timestamp || new Date(),
+      correlation_key: event.correlationKey,
+      correlation_value: customer ? customer._id : event.correlationValue,
+      event: event.event,
+      payload: event.payload,
+      context: event.context,
+      source: source,
+      workspace_id: workspaceId,
+    };
+
+    return clickHouseRecord;
   }
 }

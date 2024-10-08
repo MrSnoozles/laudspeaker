@@ -34,6 +34,8 @@ import { CacheService } from '../../common/services/cache.service';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EventsPostProcessor } from './processors/events.postprocessor';
 import { Customer } from '../customers/entities/customer.entity';
+import { EventsPGSyncProcessor } from './processors/events-pg-sync.processor';
+import { PGEvent } from '../events/entities/pg-event.entity';
 
 function getProvidersList() {
   let providerList: Array<any> = [
@@ -51,6 +53,7 @@ function getProvidersList() {
       EventsProcessor,
       EventsPreProcessor,
       EventsPostProcessor,
+      EventsPGSyncProcessor
     ];
   }
 
@@ -69,6 +72,7 @@ function getProvidersList() {
       Imports,
       Step,
       Journey,
+      PGEvent
     ]),
     MongooseModule.forFeature([
       { name: Event.name, schema: EventSchema },
