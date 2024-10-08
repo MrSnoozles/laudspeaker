@@ -3947,7 +3947,6 @@ export class CustomersService {
               },
               { $out: intermediateCollection },
             ];
-            const result = await this.CustomerModel.aggregate(allUsers).exec();
 
             return intermediateCollection;
           }
@@ -4036,7 +4035,6 @@ export class CustomersService {
             },
             { $out: intermediateCollection },
           ];
-          const result3 = await this.CustomerModel.aggregate(pipeline3).exec();
           return intermediateCollection;
         } else {
           return intermediateCollection;
@@ -4507,7 +4505,7 @@ export class CustomersService {
     const currentPK = await this.customerKeysService.getPrimaryKey(workspace.id, session);
 
     if (currentPK && customer[currentPK.name]) {
-      whereClauses.push(`(correlationKey = '${currentPK}' AND correlationValue = '${customer[currentPK]}')`);
+      whereClauses.push(`(correlationKey = '${currentPK}' AND correlationValue = '${customer[currentPK.name]}')`);
     } else {
       // Handle case where currentPK is null
       //uncomment when primary key thing is working correctly
