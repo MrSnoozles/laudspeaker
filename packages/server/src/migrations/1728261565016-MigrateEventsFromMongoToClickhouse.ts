@@ -9,7 +9,6 @@ import {
 export class MigrateEventsFromMongoToClickhouse1727222269995 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      debugger
       console.log(`RMQ_CONNECTION_URI: ${process.env.RMQ_CONNECTION_URI}`);
       try {
         const lib = require('mongoose');

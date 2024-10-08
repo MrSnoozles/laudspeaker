@@ -217,17 +217,11 @@ export class EventsPreProcessor extends ProcessorBase {
       );
 
       if (job.data.event) {
-        const clickHouseRecord: ClickHouseEvent = this.eventsService.toClickHouseEvent(
+        const clickHouseRecord: ClickHouseEvent = await this.eventsService.recordEvent(
           job.data.event,
           job.data.workspace.id,
           job.data.event.source
         );
-        
-        await this.clickhouseClient.insertAsync({
-          table: ClickHouseTable.EVENTS,
-          values: [clickHouseRecord],
-          format: 'JSONEachRow',
-        });
       }
 
       let eventJobs = journeys.map((journey) => ({

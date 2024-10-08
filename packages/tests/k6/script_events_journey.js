@@ -4,8 +4,9 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 
 export const options = {
   /* Option 0: Smoke test */
-  vus: 500,
+  vus: 1,
   duration: "1h",
+  iterations: 2,
 
   /* Option 1: Average load test*/
 
@@ -54,7 +55,7 @@ export default function () {
       name: "mahamad",
     },
   };
-  const batch_max = 250;
+  const batch_max = 1;
   const events = [];
 
   let event_names = ["event", "example", "test", "upload", "checkouPmt"];
@@ -65,8 +66,8 @@ export default function () {
   let customer;
 
   const customers = [
-      "ffffcac5-332e-46fe-9f1f-ddb9889395d2",
-      "ffffadb5-e52c-450a-ac20-e8a20bcc9ddb"
+      "ffff8e90-eacc-4818-b56f-4f27a90cf705",
+      "ffff4f05-b515-4434-8547-64440a4cfc40"
     ];
 
   const dateMin = -5;
@@ -89,14 +90,20 @@ export default function () {
 
     const uuid = uuidv4();
 
-    events.push(`{
-      "timestamp": "${d.toISOString()}",
-      "uuid": "${uuid}",
-      "event": "${event}",
-      "source": "mobile",
-      "correlationKey": "_id",
-      "correlationValue": "${customer}",
-    }`)
+    events.push({
+      timestamp: d.toISOString(),
+      uuid: uuid,
+      event: event,
+      source: "mobile",
+      correlationKey: "_id",
+      correlationValue: customer,
+      payload: {
+        credit_score: 500,
+      },
+      context: {
+        device_manufacturer: "samsung",
+      },
+    })
   }
 
   // console.log(event);
@@ -106,11 +113,11 @@ export default function () {
     // 'https://api.laudspeaker.com/customers/upsert',
     "http://localhost:3001/events/batch",
     `{
-      "batch": [${events}]
+      "batch": ${JSON.stringify(events)}
     }`,
     {
       headers: {
-        Authorization: "Api-Key fqz9AdCYDzMt2mK2oCnbs32jUafiYr1T8kF5vhl2",
+        Authorization: "Api-Key mzg6r91BikYNXXS3nYBS8963Byu9sazum3o6tk7z",
         "Content-Type": "application/json",
       },
     }

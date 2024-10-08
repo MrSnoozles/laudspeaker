@@ -514,7 +514,6 @@ export class EventsService {
   /*
    *
    * Retrieves a number of events for the user to see in the event tracker
-   * uses mongo aggregation
    */
   async getCustomEvents(
     account: Account,
@@ -1277,18 +1276,12 @@ export class EventsService {
       { new: true }
     );
 
-    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
       event,
       workspaceId,
       ClickHouseEventSource.MOBILE,
       customer
     );
-
-    await this.clickhouseClient.insertAsync({
-      table: ClickHouseTable.EVENTS,
-      values: [clickHouseRecord],
-      format: 'JSONEachRow',
-    });
 
     return customer._id;
   }
@@ -1569,18 +1562,12 @@ export class EventsService {
       { upsert: true }
     );
 
-    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
       event,
       workspaceId,
       ClickHouseEventSource.MOBILE,
       customer
     );
-
-    await this.clickhouseClient.insertAsync({
-      table: ClickHouseTable.EVENTS,
-      values: [clickHouseRecord],
-      format: 'JSONEachRow',
-    });
 
     return customer._id;
   }
@@ -1664,6 +1651,56 @@ export class EventsService {
       default:
         return false;
     }
+  }
+
+  async getNewEventPayloadAttributes(clickHouseRecord: ClickHouseEvent) {
+
+  }
+
+  async createMaterializedColumnsForEventPayload(clickHouseRecord: ClickHouseEvent) {
+
+
+  }
+
+  async recordEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = await this.insertEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    const newEventPayloadAttributes = await this.getNewEventPayloadAttributes(clickHouseRecord);
+    await this.createMaterializedColumnsForEventPayload(clickHouseRecord);
+
+    return clickHouseRecord;
+  }
+
+  async insertEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    await this.clickhouseClient.insertAsync({
+      table: ClickHouseTable.EVENTS,
+      values: [clickHouseRecord],
+      format: 'JSONEachRow',
+    });
+
+    return clickHouseRecord;
   }
 
   toClickHouseEvent(
