@@ -123,6 +123,7 @@
     "typeorm": "^0.3.12",
     "undici": "^5.21.0",
     "winston": "^3.8.1",
+    "uuidv7": "^1.0.2",
     "winston-papertrail": "^1.0.5",
     "winston-syslog": "^2.6.0"
   },

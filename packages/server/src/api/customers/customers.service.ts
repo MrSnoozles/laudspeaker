@@ -43,7 +43,7 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
 import { StatementValueType } from '../journeys/types/visual-layout.interface';
-import * as uuid from 'uuid';
+import { uuidv7 } from "uuidv7";
 import { Organization } from '../organizations/entities/organization.entity';
 import * as Sentry from '@sentry/node';
 import { CacheService } from '../../common/services/cache.service';
@@ -273,7 +273,7 @@ export class CustomersService {
     await this.checkCustomerLimit(organization);
 
     const createdCustomer = new Customer();
-    createdCustomer.uuid = uuid.v7();
+    createdCustomer.uuid = uuidv7();
     createdCustomer.workspace = workspace;
     createdCustomer.created_at = new Date();
     createdCustomer.updated_at = new Date();
@@ -292,7 +292,7 @@ export class CustomersService {
     await this.checkCustomerLimit(organization);
 
     const createdCustomer = new Customer();
-    createdCustomer.uuid = uuid.v7();
+    createdCustomer.uuid = uuidv7();
     createdCustomer.workspace = workspace;
     createdCustomer.created_at = new Date();
     createdCustomer.updated_at = new Date();
@@ -1144,7 +1144,7 @@ export class CustomersService {
 
     // If customer still not found, create a new one
     if (!result.customer) {
-      const newUUID = searchOptions.correlationValue || uuid.v7();
+      const newUUID = searchOptions.correlationValue || uuidv7();
 
       // add source information
       // TODO: need to namespace the user and system attributes
@@ -4558,7 +4558,7 @@ export class CustomersService {
     const query = `SELECT count(*) as count FROM events WHERE ${whereClause};`;
     const result = await this.clickhouseClient.query({ query });
 
-    const count = (await result.json<{count: number}>()).data[0].count;
+    const count = (await result.json<{ count: number }>()).data[0].count;
 
     if (comparisonType === 'has performed') {
       return count >= value;
