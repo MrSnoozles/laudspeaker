@@ -11,7 +11,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { setTimeout as originalSetTimeout } from 'timers';
 import { setInterval as originalSetInterval } from 'timers';
 import express from 'express';
@@ -59,14 +59,14 @@ if (cluster.isPrimary) {
         process.env.ENVIRONMENT,
       release: process.env.SENTRY_RELEASE,
       integrations: [
-        new Sentry.Integrations.Express({
-          app: expressApp,
-        }),
-        new Sentry.Integrations.Mongo({ useMongoose: true }),
-        new Sentry.Integrations.Postgres({ usePgNative: true }),
-        new Sentry.Integrations.Http({ tracing: true }),
-        new ProfilingIntegration(),
-        ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+        // new Sentry.Integrations.Express({
+        //   app: expressApp,
+        // }),
+        // new Sentry.Integrations.Mongo({ useMongoose: true }),
+        // new Sentry.postgresIntegration({ usePgNative: true }),
+        // new Sentry.Integrations.Http({ tracing: true }),
+        nodeProfilingIntegration(),
+        // ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
       ],
       debug: false,
       // Performance Monitoring
@@ -83,9 +83,10 @@ if (cluster.isPrimary) {
       );
     }
 
-    expressApp.use(Sentry.Handlers.requestHandler());
-    expressApp.use(Sentry.Handlers.tracingHandler());
-    expressApp.use(Sentry.Handlers.errorHandler());
+    // expressApp.use(Sentry.Handlers.requestHandler());
+    // expressApp.use(Sentry.Handlers.tracingHandler());
+    // expressApp.use(Sentry.Handlers.errorHandler());
+    Sentry.setupExpressErrorHandler(expressApp);
   }
 
   async function initializeApp(expressApp) {

@@ -13,7 +13,7 @@ import { Customer } from './entities/customer.entity';
 import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, QueryRunner, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, QueryRunner, Repository, Brackets } from 'typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import { isEmail } from 'class-validator';
@@ -943,13 +943,6 @@ export class CustomersService {
   ): Promise<CustomerSearchOptionResult[]> {
     let result: CustomerSearchOptionResult[] = [];
 
-    this.debug(
-      `searchOptionsInitial: ${JSON.stringify(searchOptionsInitial)},
-       object:  ${JSON.stringify(object)}`,
-      this.findCustomersBySearchOptions.name,
-      session
-    );
-
     const searchOptions = await this.extractSearchOptionsFromObject(
       workspaceId,
       searchOptionsInitial,
@@ -957,51 +950,51 @@ export class CustomersService {
       object
     );
 
-    this.debug(
-      `searchOptionsInitial: ${JSON.stringify(searchOptionsInitial)},
-       object: ${JSON.stringify(object)},
-       searchOptions: ${JSON.stringify(searchOptions)}`,
-      this.findCustomersBySearchOptions.name,
-      session
-    );
+    const findConditions = [];
 
-    const findConditions: Array<Object> = [];
-
-    // Try to find by primary key if provided
     if (searchOptions.primaryKey.value) {
-      findConditions.push({
-        [searchOptions.primaryKey.name]: searchOptions.primaryKey.value,
-        workspaceId: workspaceId,
-      });
-    }
-
-    for (const attributeName in searchOptions.messageChannels) {
-      findConditions.push({
-        [attributeName]: searchOptions.messageChannels[attributeName],
-        workspaceId,
-      });
-    }
-
-    if (searchOptions.correlationValue) {
       findConditions.push(
-        {
-          _id: searchOptions.correlationValue,
-          workspaceId,
-        },
-        {
-          other_ids: searchOptions.correlationValue,
-          workspaceId,
-        }
+        new Brackets((qb) => {
+          qb.where(`customer.user_attributes ->> :key = :value`, {
+            key: searchOptions.primaryKey.name,
+            value: searchOptions.primaryKey.value,
+          }).andWhere('customer.workspace_id = :workspaceId', { workspaceId });
+        })
       );
     }
 
-    // TODO: Mongo to Postgres
+    Object.keys(searchOptions.messageChannels).forEach((attributeName) => {
+      findConditions.push(
+        new Brackets((qb) => {
+          qb.where(`customer.user_attributes ->> :attributeName = :attributeValue`, {
+            attributeName,
+            attributeValue: searchOptions.messageChannels[attributeName],
+          }).andWhere('customer.workspace_id = :workspaceId', { workspaceId });
+        })
+      );
+    });
 
-    let customers = [];
+    if (searchOptions.correlationValue) {
+      findConditions.push(
+        new Brackets((qb) => {
+          qb.where('customer.uuid::text = :correlationValue', {
+            correlationValue: searchOptions.correlationValue,
+          })
+            .orWhere(':correlationValue = ANY(customer.other_ids)', {
+              correlationValue: searchOptions.correlationValue,
+            })
+            .andWhere('customer.workspace_id = :workspaceId', { workspaceId });
+        })
+      );
+    }
 
-    // let customers = await this.CustomerModel.find({
-    //   $or: findConditions,
-    // });
+    const queryBuilder = this.customersRepository.createQueryBuilder('customer');
+
+    findConditions.forEach((condition) => {
+      queryBuilder.orWhere(condition);
+    });
+
+    const customers = await queryBuilder.getMany();
 
     for (const findType of Object.values(FindType)) {
       for (let i = 0; i < customers.length; i++) {
@@ -1031,7 +1024,7 @@ export class CustomersService {
           }
         } else if (
           findType == FindType.CORRELATION_VALUE &&
-          customers[i]._id == searchOptions.correlationValue
+          customers[i].uuid == searchOptions.correlationValue
         ) {
           result.push({
             customer: customers[i],
@@ -1051,17 +1044,6 @@ export class CustomersService {
         }
       }
     }
-
-    this.debug(
-      `searchOptionsInitial: ${JSON.stringify(searchOptionsInitial)},
-       object: ${JSON.stringify(object)},
-       searchOptions: ${JSON.stringify(searchOptions)},
-       findConditions: ${JSON.stringify(findConditions)},
-       customers: ${JSON.stringify(customers)},
-       result: ${JSON.stringify(result)}`,
-      this.findCustomersBySearchOptions.name,
-      session
-    );
 
     // our conditions were not inclusive, something's wrong
     if (customers.length > 0 && result.length == 0) {
@@ -1121,7 +1103,7 @@ export class CustomersService {
    * @returns customer
    */
   async findOrCreateCustomerBySearchOptions(
-    workspaceId: string,
+    workspace: Workspaces,
     searchOptionsInitial: CustomerSearchOptions,
     session: string,
     customerUpsertData: Record<string, any>,
@@ -1129,14 +1111,14 @@ export class CustomersService {
     object?: Record<string, any>
   ): Promise<CustomerSearchOptionResult> {
     const searchOptions = await this.extractSearchOptionsFromObject(
-      workspaceId,
+      workspace.id,
       searchOptionsInitial,
       session,
       object
     );
 
     let result = await this.findCustomerBySearchOptions(
-      workspaceId,
+      workspace.id,
       searchOptions,
       session,
       object
@@ -1144,48 +1126,30 @@ export class CustomersService {
 
     // If customer still not found, create a new one
     if (!result.customer) {
-      const newUUID = searchOptions.correlationValue || uuidv7();
-
-      // add source information
-      // TODO: need to namespace the user and system attributes
-      // so there won't any collisions
-      const upsertData = {
-        uuid: newUUID,
-        workspaceId,
-        createdAt: new Date(),
-        laudspeakerSystemSource: systemSource,
-      };
-
-      if (searchOptions.primaryKey.value && searchOptions.primaryKey.name) {
-        upsertData[searchOptions.primaryKey.name] =
-          searchOptions.primaryKey.value;
-        upsertData['isAnonymous'] = false;
+      const customer = new Customer();
+      customer.uuid = searchOptions.correlationValue || uuidv7();
+      customer.workspace = workspace;
+      customer.created_at = new Date();
+      customer.user_attributes = {
+        [searchOptions.primaryKey?.name]: searchOptions.primaryKey?.value,
+        ...searchOptions.messageChannels,
+        ...customerUpsertData
+      }
+      customer.system_attributes = {
+        isAnonymous: searchOptions.primaryKey ? false : true
       }
 
-      _.merge(upsertData, customerUpsertData);
-
-
       try {
-        result.customer = await this.customersRepository.save(upsertData);
+        result.customer = await this.customersRepository.save(customer);
         result.findType = FindType.UPSERT; // Set findType to UPSERT to indicate an upsert operation
       } catch (error: any) {
-        // Check if the error is a duplicate key error
-        if (error.code === 11000) {
-          result.customer = await this.customersRepository.findOneBy(
-            {
-              id: parseInt(newUUID),
-              workspace: { id: workspaceId },
-            });
-          result.findType = FindType.DUPLICATE_KEY_ERROR; // Optionally, set a different findType to indicate handling of a duplicate key error
-        } else {
-          this.error(
-            error,
-            this.findOrCreateCustomerBySearchOptions.name,
-            session
-          );
+        this.error(
+          error,
+          this.findOrCreateCustomerBySearchOptions.name,
+          session
+        );
 
-          throw error;
-        }
+        throw error;
       }
     }
 
@@ -1204,7 +1168,7 @@ export class CustomersService {
       ) {
 
         const customer = await this.customersRepository.findOne({
-          where: { id: result.customer.id, workspace: { id: workspaceId } },
+          where: { id: result.customer.id, workspace: { id: workspace.id } },
         });
 
         if (customer) {
@@ -1249,7 +1213,7 @@ export class CustomersService {
 
       let { customer, findType } =
         await this.findOrCreateCustomerBySearchOptions(
-          auth.workspace.id,
+          auth.workspace,
           {
             primaryKey: {
               name: primaryKey.name,

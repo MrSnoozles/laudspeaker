@@ -1015,7 +1015,7 @@ export class EventsService {
     }
 
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
       null,
       null,
@@ -1120,7 +1120,7 @@ export class EventsService {
   }
 
   async findOrCreateCustomer(
-    workspaceId: string,
+    workspace: Workspaces,
     session: string,
     primaryKeyValue?: string,
     primaryKeyName?: string,
@@ -1128,7 +1128,7 @@ export class EventsService {
   ): Promise<{ customer: any; findType: FindType }> {
     let { customer, findType } =
       await this.customersService.findOrCreateCustomerBySearchOptions(
-        workspaceId,
+        workspace,
         {
           primaryKey: { name: primaryKeyName, value: primaryKeyValue },
         },
@@ -1199,7 +1199,7 @@ export class EventsService {
     }
 
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
       primaryKeyValue,
       primaryKeyName,
@@ -1326,7 +1326,7 @@ export class EventsService {
     // Retrieve the customer based on customerId
     const workspaceId = auth.workspace.id;
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
       null,
       null,
