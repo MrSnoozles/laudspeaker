@@ -1,7 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Customer } from './entities/customer.entity';
 import { AccountsModule } from '../accounts/accounts.module';
 import { SegmentsModule } from '../segments/segments.module';

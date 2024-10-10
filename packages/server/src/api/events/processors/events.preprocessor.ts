@@ -4,11 +4,8 @@ import {
 import { Job, MetricsTime, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { Journey } from '../../journeys/entities/journey.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { EventDocument } from '../schemas/event.schema';
 import * as Sentry from '@sentry/node';
 import { EventType } from './events.processor';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -61,8 +58,6 @@ export class EventsPreProcessor extends ProcessorBase {
     private dataSource: DataSource,
     @Inject(forwardRef(() => EventsService))
     private readonly eventsService: EventsService,
-    @InjectModel(Event.name)
-    private eventModel: Model<EventDocument>,
     @InjectRepository(Journey)
     private readonly journeysRepository: Repository<Journey>,
     @Inject(CacheService) private cacheService: CacheService,

@@ -8,8 +8,6 @@ import { JourneysService } from '../../journeys/journeys.service';
 import { ChangeStreamDocument, DataSource } from 'typeorm';
 import { AccountsService } from '../../accounts/accounts.service';
 import { SegmentsService } from '../../segments/segments.service';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
 import { Account } from '../../accounts/entities/accounts.entity';
 import { ProviderType } from '../../events/processors/events.preprocessor';
 import { Processor } from '../../../common/services/queue/decorators/processor';
@@ -79,7 +77,6 @@ export class CustomerChangeProcessor extends ProcessorBase {
     private readonly journeysService: JourneysService,
     private readonly accountsService: AccountsService,
     private readonly segmentsService: SegmentsService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     private dataSource: DataSource
   ) {
     super();

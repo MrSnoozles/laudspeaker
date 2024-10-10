@@ -72,30 +72,6 @@ services:
     networks:
       - laudspeaker_default
 
-  mongo:
-    image: "mongo:latest"
-    hostname: mongo
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    command: "--bind_ip_all --replSet rs0"
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mongosh",
-          "admin",
-          "--port",
-          "27017",
-          "--eval",
-          "db.adminCommand('ping').ok",
-        ]
-      interval: 5s
-      timeout: 2s
-      retries: 20
-    networks:
-      - laudspeaker_default
-
   # Ensure the following settings are set
   # date_time_input_format: 'best_effort'
   # output_format_json_array_of_rows: 1

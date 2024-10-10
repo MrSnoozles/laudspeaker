@@ -1,6 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -8,8 +7,6 @@ import { Template } from '../templates/entities/template.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
 import { AuthModule } from '../auth/auth.module';
-import { Event, EventSchema } from './schemas/event.schema';
-import { EventKeys, EventKeysSchema } from './schemas/event-keys.schema';
 import { CustomersModule } from '../customers/customers.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { TemplatesModule } from '../templates/templates.module';
@@ -73,10 +70,6 @@ function getProvidersList() {
       Step,
       Journey,
       PGEvent
-    ]),
-    MongooseModule.forFeature([
-      { name: Event.name, schema: EventSchema },
-      { name: EventKeys.name, schema: EventKeysSchema },
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),

@@ -127,7 +127,6 @@ export class EnrollmentProcessor extends ProcessorBase {
         job.data.account,
         job.data.journey.inclusionCriteria,
         job.data.session,
-        null
       ));
     } catch (error) {
       this.error(

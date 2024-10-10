@@ -169,7 +169,6 @@ export class StepsService {
           account,
           query,
           session,
-          null,
           batch * CUSTOMERS_PER_BATCH,
           CUSTOMERS_PER_BATCH,
           collectionName

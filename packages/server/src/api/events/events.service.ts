@@ -18,11 +18,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { ClientSession, Model, SortOrder } from 'mongoose';
-import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
-import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import keyTypes from '../../fixtures/keyTypes';
 import { PostHogEventDto } from './dto/posthog-event.dto';
@@ -72,13 +68,8 @@ export class EventsService {
     private readonly webhooksService: WebhooksService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectModel(Event.name)
-    private EventModel: Model<EventDocument>,
-    @InjectModel(EventKeys.name)
-    private EventKeysModel: Model<EventKeysDocument>,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService,
     @Inject(ClickHouseClient)
@@ -119,34 +110,12 @@ export class EventsService {
     const session = randomUUID();
     (async () => {
       try {
-        const collection = this.connection.db.collection('events');
-        await collection.createIndex({ event: 1, workspaceId: 1 });
-        await collection.createIndex({ correlationKey: 1, workspaceId: 1 });
-        await collection.createIndex({ correlationValue: 1, workspaceId: 1 });
-        await collection.createIndex({
-          correlationValue: 1,
-          workspaceId: 1,
-          event: 1,
-        });
-        await collection.createIndex({ createdAt: 1 });
-        await collection.createIndex({ workspaceId: 1, _id: -1 });
-        await collection.createIndex({ event: 'text' });
       } catch (e) {
         this.error(e, EventsService.name, session);
       }
     })();
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
-        this.EventKeysModel.updateOne(
-          { key: name },
-          {
-            key: name,
-            type: property_type,
-            providerSpecific: 'posthog',
-            isDefault: true,
-          },
-          { upsert: true }
-        ).exec();
       }
     }
   }
@@ -287,30 +256,9 @@ export class EventsService {
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {
-    const attributes = await this.EventKeysModel.find().exec();
     if (resourceId === 'attributes') {
-      return {
-        id: resourceId,
-        nextResourceURL: 'attributeConditions',
-        options: attributes.map((attribute) => ({
-          label: attribute.key,
-          id: attribute.key,
-          nextResourceURL: attribute.key,
-        })),
-        type: 'select',
-      };
+      return {};
     }
-
-    const attribute = attributes.find(
-      (attribute) => attribute.key === resourceId
-    );
-    if (attribute)
-      return {
-        id: resourceId,
-        options: attributeConditions(attribute.type, attribute.isArray),
-        type: 'select',
-      };
-
     return (
       mockData.resources.find((resource) => resource.id === resourceId) || {}
     );
@@ -328,21 +276,7 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const attributes = await this.EventKeysModel.find({
-      $and: [
-        { key: RegExp(`.*${resourceId}.*`, 'i') },
-        { $or: [{ workspaceId: workspace.id }, { isDefault: true }] },
-      ],
-      providerSpecific,
-    }).exec();
-
-    return attributes.map((el) => ({
-      id: el.id,
-      key: el.key,
-      type: el.type,
-      isArray: el.isArray,
-      options: attributeConditions(el.type, el.isArray),
-    }));
+    return [];
   }
 
   async getPossibleEventNames(account: Account, search: string) {
@@ -352,16 +286,7 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const eventNames = await this.EventModel.find({
-      $and: [
-        { workspaceId: workspace.id },
-        { event: RegExp(`.*${search}.*`, 'i') },
-      ],
-    })
-      .distinct('event')
-      .exec();
-
-    return eventNames;
+    return [];
   }
 
   async getPossibleEventProperties(
@@ -375,20 +300,8 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const records = await this.EventModel.find({
-      $and: [{ workspaceId: workspace.id }, { event }],
-    }).exec();
-
-    if (records.length === 0) return [];
-
-    const uniqueProperties: string[] = records
-      .map((record) => Object.keys(record.payload))
-      .reduce((acc, el) => [...acc, ...el])
-      .reduce((acc, el) => (acc.includes(el) ? acc : [...acc, el]), []);
-
-    return uniqueProperties.filter((property) =>
-      property.match(RegExp(`.*${search}.*`, 'i'))
-    );
+    
+    return [];
   }
 
   async getPossibleTypes(session: string) {
@@ -405,12 +318,7 @@ export class EventsService {
 
   async getPossibleValues(key: string, search: string, session: string) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-    const docs = await this.EventModel.aggregate([
-      { $match: { [`event.${key}`]: searchRegExp } },
-      { $group: { _id: `$event.${key}` } },
-      { $limit: 5 },
-    ]).exec();
-    return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
+    return [];
   }
 
   /*
@@ -618,8 +526,7 @@ export class EventsService {
 
   //to do need to specify how this is
   async getEventsByMongo(mongoQuery: any, customer: Customer) {
-    const count = await this.EventModel.count(mongoQuery).exec();
-    return count;
+    return 0;
   }
 
   //to do need to specify how this is
@@ -628,9 +535,8 @@ export class EventsService {
     //externalId: boolean,
     //numberOfTimes: Number,
   ) {
-    const docs = await this.EventModel.aggregate(aggregationPipeline).exec();
 
-    return docs;
+    return [];
   }
 
   async sendTestPush(account: Account, token: string) {

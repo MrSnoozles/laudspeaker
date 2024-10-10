@@ -19,8 +19,6 @@ import { AuthService } from '../auth/auth.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
 import { RemoveAccountDto } from './dto/remove-account.dto';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose, { ClientSession } from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
@@ -71,7 +69,6 @@ export class AccountsService extends BaseJwtHelper {
     private templatesService: TemplatesService,
     @Inject(forwardRef(() => StepsService))
     private stepsService: StepsService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(forwardRef(() => WebhooksService))
     private webhookService: WebhooksService
   ) {
@@ -358,9 +355,6 @@ export class AccountsService extends BaseJwtHelper {
         oldUser.expectedOnboarding.length === oldUser.currentOnboarding.length;
     }
 
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-
     let verified = oldUser.verified;
     const needEmailUpdate =
       updateUserDto.email && oldUser.email !== updateUserDto.email;
@@ -490,18 +484,15 @@ export class AccountsService extends BaseJwtHelper {
           session
         );
 
-      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
 
       return updatedUser;
     } catch (e) {
-      await transactionSession.abortTransaction();
       err = e;
       this.error(e, this.update.name, session);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
-      await transactionSession.endSession();
     }
     if (err) throw err;
   }

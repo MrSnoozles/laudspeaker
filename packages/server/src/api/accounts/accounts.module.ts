@@ -10,7 +10,6 @@ import { S3Service } from '../s3/s3.service';
 import { JourneysModule } from '../journeys/journeys.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { StepsModule } from '../steps/steps.module';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationPlan } from '../organizations/entities/organization-plan.entity';

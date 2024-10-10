@@ -21,7 +21,6 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment, SegmentType } from './entities/segment.entity';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 import { randomUUID } from 'crypto';
-import { Filter, Document } from 'mongodb';
 import * as Sentry from '@sentry/node';
 import { QueueType } from '../../common/services/queue/types/queue-type';
 import { Producer } from '../../common/services/queue/classes/producer';

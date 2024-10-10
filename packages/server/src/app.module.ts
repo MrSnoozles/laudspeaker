@@ -4,7 +4,6 @@ import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ApiModule } from './api/api.module';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AuthMiddleware } from './api/auth/middleware/auth.middleware';
 import { EventsController } from './api/events/events.controller';
 import { SlackMiddleware } from './api/slack/middleware/slack.middleware';
@@ -14,11 +13,6 @@ import { CronService } from './app.cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Account } from './api/accounts/entities/accounts.entity';
 import { Verification } from './api/auth/entities/verification.entity';
-import { EventSchema, Event } from './api/events/schemas/event.schema';
-import {
-  EventKeys,
-  EventKeysSchema,
-} from './api/events/schemas/event-keys.schema';
 import { Integration } from './api/integrations/entities/integration.entity';
 import { Template } from './api/templates/entities/template.entity';
 import { Installation } from './api/slack/entities/installation.entity';
@@ -157,19 +151,6 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
           }),
         ]
       : []),
-    process.env.DOCUMENT_DB === 'true'
-      ? MongooseModule.forRoot(process.env.DOCUMENT_DB_CONNECTION_STRING, {
-          user: process.env.DOCUMENT_DB_USER,
-          pass: process.env.DOCUMENT_DB_PASS,
-          tls: true,
-          tlsCAFile: process.env.DOCUMENT_DB_CA_FILE,
-          tlsAllowInvalidHostnames: true,
-          directConnection: true,
-          retryWrites: false,
-        })
-      : MongooseModule.forRoot(
-          formatMongoConnectionString(process.env.MONGOOSE_URL)
-        ),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => ({
@@ -211,10 +192,6 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     }),
     TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
     ApiModule,
-    MongooseModule.forFeature([
-      { name: Event.name, schema: EventSchema },
-      { name: EventKeys.name, schema: EventKeysSchema },
-    ]),
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([
       Account,

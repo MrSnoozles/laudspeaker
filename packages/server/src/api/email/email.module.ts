@@ -3,7 +3,6 @@ import { EmailController } from './email.controller';
 import { MessageProcessor } from './email.processor';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { MongooseModule } from '@nestjs/mongoose';
 import { CustomersModule } from '../customers/customers.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 

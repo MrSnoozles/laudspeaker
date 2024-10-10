@@ -29,7 +29,6 @@ import { imageFileFilter } from '../auth/middleware/file.validation';
 import { S3Service } from '../s3/s3.service';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
-import { Model } from 'mongoose';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 
 @Controller('accounts')

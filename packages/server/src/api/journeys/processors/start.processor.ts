@@ -152,7 +152,6 @@ export class StartProcessor extends ProcessorBase {
           job.data.owner,
           job.data.query,
           job.data.session,
-          null,
           job.data.skip,
           job.data.limit,
           job.data.collectionName

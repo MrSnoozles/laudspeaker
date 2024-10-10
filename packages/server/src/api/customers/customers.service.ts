@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import mongoose, { ClientSession } from 'mongoose';
 import {
   BadRequestException,
   HttpException,
@@ -8,7 +7,6 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/mongoose';
 import { Customer } from './entities/customer.entity';
 import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -162,8 +160,6 @@ export class CustomersService {
     private readonly eventsService: EventsService,
     @Inject(CustomerKeysService)
     private readonly customerKeysService: CustomerKeysService,
-    @InjectConnection()
-    private readonly connection: mongoose.Connection,
     private readonly s3Service: S3Service,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
@@ -701,7 +697,6 @@ export class CustomersService {
    * @param {string} account The owner of the customers; if a string, its the id,otherwise its an account object
    * @param {any} criteria Conditions to match on
    * @param {string} session Session identifier
-   * @param {ClientSession} [transactionSession]  Mongo Transaction
    * @param {number} [skip] How many documents to skip; used for pagination
    * @param {number} [limit] Max no. documents to return; used for pagination
    *
@@ -712,7 +707,6 @@ export class CustomersService {
     account: Account,
     criteria: any,
     session: string,
-    transactionSession?: ClientSession,
     skip?: number,
     limit?: number,
     collectionName?: string
@@ -731,18 +725,10 @@ export class CustomersService {
       query = {
         workspaceId: workspace.id,
       };
-      if (transactionSession) query.session(transactionSession);
       if (limit) query.limit(limit);
       if (skip) query.skip(skip);
       customers = await query.exec();
     } else {
-      customers = await this.connection.db
-        .collection(collectionName)
-        .find({}, { session: transactionSession })
-        .sort({ _id: 1 })
-        .skip(skip) // Skip the specified number of documents
-        .limit(limit) // Limit the number of documents to return
-        .toArray();
     }
     return customers;
   }
@@ -766,7 +752,6 @@ export class CustomersService {
     account: Account,
     criteria: any,
     session: string,
-    transactionSession?: ClientSession
   ): Promise<{ collectionName: string; count: number }> {
     let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
@@ -783,7 +768,6 @@ export class CustomersService {
       query = {
         workspaceId: workspace.id,
       };
-      if (transactionSession) query.session(transactionSession);
       count = await query.exec();
     } else {
       collectionPrefix = this.segmentsService.generateRandomString();
@@ -796,9 +780,6 @@ export class CustomersService {
         collectionPrefix
       );
       collectionName = customersInSegment; // Name of the MongoDB collection
-      count = await this.connection.db
-        .collection(collectionName)
-        .countDocuments({}, { session: transactionSession });
     }
 
     return { collectionName, count };
@@ -1738,7 +1719,6 @@ export class CustomersService {
       collectionName = intermediateCollection + count;
     }
     thisCollectionName = collectionName;
-    this.connection.db.collection(thisCollectionName);
     count = count + 1;
     //collectionName = collectionName + count;
 
@@ -1802,9 +1782,6 @@ export class CustomersService {
       //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
 
       // Perform the aggregation on the first collection
-      const collectionHandle =
-        this.connection.db.collection(thisCollectionName);
-      await collectionHandle.aggregate(unionAggregation).toArray();
 
       if (topLevel) {
         //for each count drop the collections up to the last one
@@ -1817,7 +1794,6 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -1873,20 +1849,6 @@ export class CustomersService {
           session,
           account.id
         );
-        const collectionHandle = this.connection.db.collection(collName);
-        await collectionHandle
-          .aggregate([
-            {
-              $addFields: { customerId: '$_id' },
-            },
-            {
-              $project: { _id: 0 },
-            },
-            {
-              $out: newCollName,
-            },
-          ])
-          .toArray(); // Execute the aggregation pipeline and create new collections
         return newCollName;
       })
     );
@@ -1896,27 +1858,10 @@ export class CustomersService {
     const finalCollection = `${finalCollectionPrepend}${collectionName}`;
     await Promise.all(
       newCollectionNames.map(async (newCollName) => {
-        const cursor = this.connection.db.collection(newCollName).find();
         let batch = [];
-        while (await cursor.hasNext()) {
-          const doc = await cursor.next();
-          batch.push({
-            insertOne: {
-              document: doc,
-            },
-          });
-
-          if (batch.length >= BATCH_SIZE) {
-            await this.connection.db
-              .collection(finalCollection)
-              .bulkWrite(batch);
-            batch = []; // Reset the batch for the next group of documents
-          }
-        }
 
         // Process any remaining documents in the last batch
         if (batch.length > 0) {
-          await this.connection.db.collection(finalCollection).bulkWrite(batch);
         }
       })
     );
@@ -1924,49 +1869,9 @@ export class CustomersService {
     // Step 3 AND CASE: Aggregate in finalCollection to group by customerId and project it back as the _id
     if (andOr === 'and') {
       // Step 3: Aggregate in finalCollection to group by customerId and project it back as the _id
-      await this.connection.db
-        .collection(finalCollection)
-        .aggregate([
-          {
-            $group: {
-              _id: '$customerId', // Group by customerId
-              count: { $sum: 1 },
-              customerId: { $first: '$customerId' },
-            },
-          },
-          { $match: { count: sets.length } },
-          {
-            $project: {
-              _id: '$customerId',
-            },
-          },
-          {
-            $out: thisCollectionName, // Output the final aggregated documents into the same collection
-          },
-        ])
-        .toArray();
     }
     // Step 3 OR CASE: Aggregate in finalCollection to group by customerId and project it back as the _id
     else {
-      await this.connection.db
-        .collection(finalCollection)
-        .aggregate([
-          {
-            $group: {
-              _id: '$customerId', // Group by customerId
-              customerId: { $first: '$customerId' },
-            },
-          },
-          {
-            $project: {
-              _id: '$customerId',
-            },
-          },
-          {
-            $out: thisCollectionName, // Output the final aggregated documents into the same collection
-          },
-        ])
-        .toArray();
     }
 
     //drop all intermediate collections
@@ -1978,7 +1883,6 @@ export class CustomersService {
         account.id
       );
       //toggle for testing segments
-      await this.connection.db.collection(finalCollection).drop();
       this.debug(
         `dropped successfully`,
         this.getCustomersFromQuery.name,
@@ -2003,7 +1907,6 @@ export class CustomersService {
           account.id
         );
         //toggle for testing segments
-        await this.connection.db.collection(collection).drop();
         this.debug(
           `dropped successfully`,
           this.getCustomersFromQuery.name,
@@ -2061,7 +1964,6 @@ export class CustomersService {
       collectionName = intermediateCollection + count;
     }
     thisCollectionName = collectionName;
-    this.connection.db.collection(thisCollectionName);
     count = count + 1;
     //collectionName = collectionName + count;
 
@@ -2100,7 +2002,6 @@ export class CustomersService {
         account.id
       );
       const unionAggregation: any[] = [];
-      let collectionHandle = this.connection.db.collection(thisCollectionName);
       //if (sets.length > 1) {
       // Add each additional collection to the pipeline for union
       if (process.env.DOCUMENT_DB === 'true') {
@@ -2135,7 +2036,6 @@ export class CustomersService {
         //console.log("the first collection is", thisCollectionName);
         //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
         // Perform the aggregation on the first collection
-        await collectionHandle.aggregate(unionAggregation).toArray();
       }
 
       if (topLevel) {
@@ -2149,7 +2049,6 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getCustomersFromQuery.name,
@@ -2192,13 +2091,8 @@ export class CustomersService {
 
       //return thisCollectionName; // mergedSet;
 
-      const something = await collectionHandle
-        .aggregate(finalAggregationPipeline)
-        .toArray();
-
       return fullDetailsCollectionName;
     } else if (query.type === 'any') {
-      console.log('the query has any (OR)');
       if (!query.statements || query.statements.length === 0) {
         return ''; //new Set<string>(); // Return an empty set
       }
@@ -2217,7 +2111,6 @@ export class CustomersService {
       );
 
       const unionAggregation: any[] = [];
-      const collectionHandle = this.connection.db.collection(sets[0]);
       /*
       [
         { $group: { _id: "$customerId" } }
@@ -2269,7 +2162,6 @@ export class CustomersService {
 
         //console.log("the first collection is", sets[0]);
         // Perform the aggregation on the first collection
-        await collectionHandle.aggregate(unionAggregation).toArray();
       }
 
       if (topLevel) {
@@ -2283,7 +2175,6 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getCustomersFromQuery.name,
@@ -2324,10 +2215,7 @@ export class CustomersService {
         },
       ];
 
-      //return thisCollectionName; // mergedSet;
-      const something = await collectionHandle
-        .aggregate(finalAggregationPipeline)
-        .toArray();
+      //return thisCollection
       return fullDetailsCollectionName;
     }
     //shouldn't get here;
@@ -2390,7 +2278,6 @@ export class CustomersService {
           collectionName = intermediateCollection + count;
         }
         thisCollectionName = collectionName;
-        this.connection.db.collection(thisCollectionName);
         count = count + 1;
         //collectionName = collectionName + count;
 
@@ -2416,8 +2303,6 @@ export class CustomersService {
             async () => {
               const unionAggregation: any[] = [];
               // Perform the aggregation on the first collection
-              const collectionHandle =
-                this.connection.db.collection(thisCollectionName);
 
               if (process.env.DOCUMENT_DB === 'true') {
                 await this.documentDBanySegmentCase(
@@ -2455,7 +2340,6 @@ export class CustomersService {
               //console.log("the first collection is", thisCollectionName);
               //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
 
-              await collectionHandle.aggregate(unionAggregation).toArray();
             }
           );
 
@@ -2470,7 +2354,6 @@ export class CustomersService {
                   account.id
                 );
                 //toggle for testing segments
-                await this.connection.db.collection(collection).drop();
                 this.debug(
                   `dropped successfully`,
                   this.getSegmentCustomersFromQuery.name,
@@ -2535,8 +2418,6 @@ export class CustomersService {
 
             //console.log("the first collection is", sets[0]);
             // Perform the aggregation on the first collection
-            const collectionHandle = this.connection.db.collection(sets[0]);
-            await collectionHandle.aggregate(unionAggregation).toArray();
           }
 
           if (topLevel) {
@@ -2550,7 +2431,6 @@ export class CustomersService {
                   account.id
                 );
                 //toggle for testing segments
-                await this.connection.db.collection(collection).drop();
                 this.debug(
                   `dropped successfully`,
                   this.getSegmentCustomersFromQuery.name,
@@ -3126,17 +3006,12 @@ export class CustomersService {
             session,
             account.id
           );
-          const collectionHandle = this.connection.db.collection(
-            intermediateCollection
-          );
           const batchSize = 1000; // Define batch size
           let batch = [];
 
           // Async function to handle batch insertion
           async function processBatch(batch) {
             try {
-              const result = await collectionHandle.insertMany(batch);
-              //console.log('Batch of documents inserted:', result);
             } catch (err) {
               console.error('Error inserting documents:', err);
             }
@@ -3197,7 +3072,6 @@ export class CustomersService {
 
                 // Insert any remaining documents
                 try {
-                  const result = await collectionHandle.insertMany(batch);
                   //console.log('Final batch of documents inserted:', result);
                 } catch (err) {
                   console.error('Error inserting documents:', err);
@@ -3548,7 +3422,6 @@ export class CustomersService {
           account.id
         );
 
-        this.connection.db.collection(intermediateCollection);
 
         const aggregationPipeline: any[] = [
           { $match: query },
@@ -3765,7 +3638,6 @@ export class CustomersService {
           }
         }
 
-        this.connection.db.collection(intermediateCollection);
 
         if (comparisonType === 'has performed') {
           const aggregationPipeline: any[] = [
