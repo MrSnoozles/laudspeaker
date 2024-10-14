@@ -44,7 +44,7 @@ export type MappingParams = Record<
   string,
   {
     asAttribute?: ImportAttribute;
-    isPrimary: boolean;
+    is_primary: boolean;
     doNotOverwrite: boolean;
   }
 >;
@@ -114,7 +114,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
             Object.keys(data.headers).map((el) => ({
               head: el,
               asAttribute: undefined,
-              isPrimary: false,
+              is_primary: false,
               doNotOverwrite: false,
             })),
             "head"
@@ -269,7 +269,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
   const handle2TabValidation = async () => {
     const pk = Object.values(mappingSettings).find(
       (el) =>
-        el.isPrimary &&
+        el.is_primary &&
         el.asAttribute?.attribute.name &&
         el.asAttribute?.attribute.attribute_type.name &&
         !el.asAttribute.skip

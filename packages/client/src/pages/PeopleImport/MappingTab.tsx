@@ -58,7 +58,7 @@ const MappingTab = ({
 
     if (
       fileData?.primaryAttribute &&
-      !Object.values(mappingSettings).find((el) => el.isPrimary)
+      !Object.values(mappingSettings).find((el) => el.is_primary)
     ) {
       const pk = data.find((el) => el.is_primary);
       if (
@@ -78,7 +78,7 @@ const MappingTab = ({
                 attribute: pk,
                 skip: false,
               },
-              isPrimary: true,
+              is_primary: true,
             },
           });
         }
@@ -110,7 +110,7 @@ const MappingTab = ({
       Object.values(mappingSettings).some(
         (el) =>
           el.asAttribute?.attribute.name === key &&
-          el.asAttribute?.attribute.attribute_type.name === type
+          el.asAttribute?.attribute.attribute_type?.name === type
       ) &&
       type !== "_SKIP_RECORD_"
     ) {
@@ -126,22 +126,22 @@ const MappingTab = ({
             possibleKeys.find((possibleKey) => {
               return (
                 possibleKey.name === key &&
-                possibleKey.attribute_type.name === type
+                possibleKey.attribute_type?.name === type
               );
             }) || possibleKeys[0],
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
-        isPrimary:
+        is_primary:
           selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_" ||
           (fileData?.primaryAttribute &&
             fileData?.primaryAttribute.name !== key &&
-            fileData?.primaryAttribute.attribute_type.name !== type)
+            fileData?.primaryAttribute.attribute_type?.name !== type)
             ? false
             : fileData?.primaryAttribute &&
               fileData?.primaryAttribute.name === key &&
-              fileData?.primaryAttribute.attribute_type.name === type
+              fileData?.primaryAttribute.attribute_type?.name === type
             ? true
-            : mappingSettings[head].isPrimary,
+            : mappingSettings[head].is_primary,
       },
     });
   };
@@ -162,12 +162,12 @@ const MappingTab = ({
     Object.keys(mappingSettings).forEach((el) => {
       if (
         newSettings[el].asAttribute?.attribute?.name === key &&
-        newSettings[el].asAttribute?.attribute?.attribute_type.name === type
+        newSettings[el].asAttribute?.attribute?.attribute_type?.name === type
       ) {
-        newSettings[el].isPrimary = true;
+        newSettings[el].is_primary = true;
         newSettings[el].doNotOverwrite = true;
       } else {
-        newSettings[el].isPrimary = false;
+        newSettings[el].is_primary = false;
       }
     });
 
@@ -177,7 +177,7 @@ const MappingTab = ({
   };
 
   const handleOverwriteUpdate = (head: string) => (checked: boolean) => {
-    if (mappingSettings[head].isPrimary) return;
+    if (mappingSettings[head].is_primary) return;
 
     const newSettings = { ...mappingSettings };
     newSettings[head].doNotOverwrite = checked;
@@ -188,7 +188,7 @@ const MappingTab = ({
     !!mappingSettings[head]?.asAttribute &&
     !mappingSettings[head].asAttribute?.skip;
 
-  const primaryKey = Object.values(mappingSettings).find((el) => el.isPrimary);
+  const primaryKey = Object.values(mappingSettings).find((el) => el.is_primary);
 
   useEffect(() => {
     loadPossibleKeys();
@@ -207,7 +207,7 @@ const MappingTab = ({
         <RadioGroup
           value={
             primaryKey?.asAttribute?.attribute
-              ? `${primaryKey.asAttribute.attribute.name};-;${primaryKey.asAttribute.attribute.attribute_type.name}`
+              ? `${primaryKey.asAttribute.attribute.name};-;${primaryKey.asAttribute.attribute.attribute_type?.name}`
               : ""
           }
           onChange={handlePrimaryKeyChange}
@@ -301,7 +301,7 @@ const MappingTab = ({
                                     .name
                                 };-;${
                                   mappingSettings[head].asAttribute!.attribute
-                                    .attribute_type.name
+                                    .attribute_type?.name
                                 }`
                               : ""
                           }
@@ -388,7 +388,7 @@ const MappingTab = ({
                                 el.name.includes(search[head]?.search || "")
                               )
                               .map((el) => ({
-                                key: `${el.name};-;${el.attribute_type.name}`,
+                                key: `${el.name};-;${el.attribute_type?.name}`,
                                 title: el.name,
                               })),
                           ]}
@@ -414,7 +414,7 @@ const MappingTab = ({
                                       .attribute.name
                                   };-;${
                                     mappingSettings[head]!.asAttribute!
-                                      .attribute.attribute_type.name
+                                      .attribute.attribute_type?.name
                                   }`
                                 : "-1"
                             }
@@ -440,7 +440,7 @@ const MappingTab = ({
                           propControl
                           initValue={mappingSettings[head].doNotOverwrite}
                           className={`${
-                            (mappingSettings[head].isPrimary ||
+                            (mappingSettings[head].is_primary ||
                               !isProperAttribute(head)) &&
                             "opacity-70 pointer-events-none"
                           }`}

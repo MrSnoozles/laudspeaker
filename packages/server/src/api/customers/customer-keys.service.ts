@@ -130,14 +130,16 @@ export class CustomerKeysService {
         where: {
           workspace: { id: workspaceId },
           is_primary: true,
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     } else {
       return await this.customerKeysRepository.findOne({
         where: {
           workspace: { id: workspaceId },
           is_primary: true,
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     }
   }
@@ -495,7 +497,6 @@ export class CustomerKeysService {
 
       const attributes = await queryBuilder.getMany();
 
-
       return (
         [...attributes]
           .map((el) => ({
@@ -504,7 +505,7 @@ export class CustomerKeysService {
             type: el.attribute_type?.name,
             dateFormat: `${el.attribute_parameter?.display_value}, (${el.attribute_parameter.example})`,
             isArray: el.attribute_type?.name === AttributeTypeName.ARRAY,
-            isPrimary: el.is_primary,
+            is_primary: el.is_primary,
           }))
           // @ts-ignore
           .filter((el) => el.type !== 'undefined')

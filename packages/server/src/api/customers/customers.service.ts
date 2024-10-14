@@ -129,7 +129,7 @@ export interface SystemAttribute {
   id: string;
   key: string;
   type: string;
-  isPrimary?: string;
+  is_primary?: string;
   dateFormat?: string;
   isArray: boolean;
   isSystem: true;
@@ -4676,7 +4676,7 @@ export class CustomersService {
 
   convertForImport(
     value: string,
-    convertTo: AttributeTypeName,
+    convertTo: string,
     columnName: string,
     dateFormat?: string
   ) {
@@ -4762,7 +4762,7 @@ export class CustomersService {
       });
 
       const primaryArr = Object.values(clearedMapping).filter(
-        (el) => el.isPrimary
+        (el) => el.is_primary
       );
 
       if (primaryArr.length !== 1) {
@@ -4778,8 +4778,8 @@ export class CustomersService {
       if (
         savedPK &&
         !(
-          savedPK.attribute_type.name === passedPK.asAttribute.type &&
-          savedPK.name === passedPK.asAttribute.key
+          savedPK.attribute_type.name === passedPK.asAttribute?.attribute.attribute_type.name &&
+          savedPK.name === passedPK.asAttribute?.attribute.name
         )
       ) {
         throw new HttpException(
@@ -4835,9 +4835,9 @@ export class CustomersService {
 
               const convertResult = this.convertForImport(
                 data[el],
-                clearedMapping[el].asAttribute.type,
+                clearedMapping[el].asAttribute?.attribute.attribute_type.name,
                 el,
-                clearedMapping[el].asAttribute.dateFormat
+                clearedMapping[el].asAttribute?.attribute.attribute_parameter?.key
               );
 
               if (convertResult.error) {
@@ -4845,7 +4845,7 @@ export class CustomersService {
                 return;
               }
 
-              if (clearedMapping[el].isPrimary) {
+              if (clearedMapping[el].is_primary) {
                 convertedPKValue = convertResult.converted;
               }
             });
@@ -4863,7 +4863,7 @@ export class CustomersService {
               //     (async () => {
               //       const { createdCount, updatedCount } =
               //         await this.countCreateUpdateWithBatch(
-              //           passedPK.asAttribute.key,
+              //           passedPK.asAttribute?.attribute.name,
               //           Array.from(currentBatch)
               //         );
               //       created += createdCount;
@@ -4880,7 +4880,7 @@ export class CustomersService {
             //     (async () => {
             //       const { createdCount, updatedCount } =
             //         await this.countCreateUpdateWithBatch(
-            //           passedPK.asAttribute.key,
+            //           passedPK.asAttribute?.attribute.name,
             //           Array.from(currentBatch)
             //         );
             //       created += createdCount;
@@ -4967,7 +4967,7 @@ export class CustomersService {
       });
 
       const primaryArr = Object.values(clearedMapping).filter(
-        (el) => el.isPrimary
+        (el) => el.is_primary
       );
 
       if (primaryArr.length !== 1) {
@@ -4983,8 +4983,8 @@ export class CustomersService {
       if (
         savedPK &&
         !(
-          savedPK.attribute_type.name === passedPK.asAttribute.type &&
-          savedPK.name === passedPK.asAttribute.key
+          savedPK.attribute_type.name === passedPK.asAttribute?.attribute.attribute_type.name &&
+          savedPK.name === passedPK.asAttribute?.attribute.name
         )
       ) {
         throw new HttpException(
@@ -4998,11 +4998,11 @@ export class CustomersService {
       //   const afterSaveNewPK = await this.CustomerKeysModel.findOneAndUpdate(
       //     {
       //       workspaceId: workspace.id,
-      //       key: passedPK.asAttribute.key,
-      //       type: passedPK.asAttribute.type,
+      //       key: passedPK.asAttribute?.attribute.name,
+      //       type: passedPK.asAttribute?.attribute.attribute_type.name,
       //     },
       //     {
-      //       isPrimary: true,
+      //       is_primary: true,
       //     },
       //     {
       //       new: true,

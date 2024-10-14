@@ -122,7 +122,7 @@ export class ImportProcessor extends ProcessorBase {
               if (isSkipped) return;
               const convertResult = this.customersService.convertForImport(
                 data[el],
-                clearedMapping[el].asAttribute.attribute.attribute_type.name,
+                clearedMapping[el].asAttribute?.attribute.attribute_type.name,
                 el,
                 clearedMapping[el].asAttribute.dateFormat
               );
@@ -130,10 +130,10 @@ export class ImportProcessor extends ProcessorBase {
                 isSkipped = true;
                 return;
               }
-              if (clearedMapping[el].isPrimary) {
+              if (clearedMapping[el].is_primary) {
                 convertedPKValue = convertResult.converted;
               }
-              convertedRecord[clearedMapping[el].asAttribute.key] =
+              convertedRecord[clearedMapping[el].asAttribute?.attribute.name] =
                 convertResult.converted;
             });
             if (isSkipped) {
