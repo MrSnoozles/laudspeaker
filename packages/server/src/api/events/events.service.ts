@@ -53,7 +53,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
 import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '@/common/services/clickhouse';
-
+import { NodeFactory, Query, QuerySyntax } from '../../common/services/query';
 @Injectable()
 export class EventsService {
   private tagEngine = new Liquid();
@@ -334,6 +334,53 @@ export class EventsService {
     id = '',
     lastPageId = ''
   ) {
+
+    const factory = new NodeFactory();
+    const x = new Query();
+
+    const exp1 = factory.createBinaryExpression(
+      'credit_score',
+      QuerySyntax.GreaterThanToken,
+      700
+    );
+
+    const exp2 = factory.createBinaryExpression(
+      'age',
+      QuerySyntax.LessThanEqualsToken,
+      40
+    );
+
+    x.add(exp1);
+    x.add(exp2);
+    console.log(`QUERY x: ${x.toSQL()}`);
+      
+    const z = new Query();
+
+    const exp3 = factory.createBinaryExpression(
+      'credit_score',
+      QuerySyntax.GreaterThanToken,
+      700
+    );
+
+    const exp4 = factory.createBinaryExpression(
+      'age',
+      QuerySyntax.LessThanEqualsToken,
+      40
+    );
+
+    const exp5 = factory.createEventExpressionNode(
+      'eventA',
+      QuerySyntax.HasPerformedKeyword,
+      10
+    );
+
+    z.add(exp3);
+    z.add(exp4);
+    z.add(exp5);
+
+    z.setMatchingToAll();
+    console.log(`QUERY z: ${z.toSQL()}`);
+
     return Sentry.startSpan(
       { name: 'EventsService.getCustomEvents' },
       async () => {

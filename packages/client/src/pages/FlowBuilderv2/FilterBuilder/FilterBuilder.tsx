@@ -380,6 +380,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   };
 
   useEffect(() => {
+    loadPossibleKeys();
     loadSegments();
     loadPossibleJourneys();
   }, []);

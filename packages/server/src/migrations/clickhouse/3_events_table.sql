@@ -1,3 +1,5 @@
+SET allow_experimental_json_type = 1;
+
 CREATE TABLE IF NOT EXISTS events
 (
   id                  UInt64          DEFAULT generateSnowflakeID(),
@@ -7,8 +9,8 @@ CREATE TABLE IF NOT EXISTS events
   correlation_key     String          NOT NULL,
   correlation_value   String          NOT NULL,
   event               String          NOT NULL,
-  payload             String          NOT NULL,
-  context             String          NOT NULL,
+  payload             JSON            NOT NULL,
+  context             JSON          NOT NULL,
   source              String          NOT NULL,
   workspace_id        UUID            NOT NULL,         
 )

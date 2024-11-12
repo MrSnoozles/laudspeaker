@@ -18,6 +18,13 @@ import express from 'express';
 import cluster from 'cluster';
 import * as os from 'os';
 
+// import { Query } from '@/common/services/query';
+// const x = new Query();
+// x.add(AttrExpression());
+
+// console.log(`HELLOOOO ${x.kind}`);
+
+
 const morgan = require('morgan');
 
 let numProcesses = 1;

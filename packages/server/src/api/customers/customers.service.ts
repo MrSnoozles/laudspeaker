@@ -753,6 +753,8 @@ export class CustomersService {
     criteria: any,
     session: string,
   ): Promise<{ collectionName: string; count: number }> {
+    return {collectionName: "", count: 0};
+
     let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let collectionPrefix: string;
