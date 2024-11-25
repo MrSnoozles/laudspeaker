@@ -1,5 +1,4 @@
-export * from "./interfaces";
-export * from "./enums";
+export * from "./types";
 export * from "./classes";
 
 export { QueryService } from "./query.service";

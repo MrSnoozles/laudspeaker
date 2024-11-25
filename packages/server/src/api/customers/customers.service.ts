@@ -3155,11 +3155,12 @@ export class CustomersService {
         }
       default:
         this.debug(
-          'unrecognised value type\n',
+          `Invalid type: ${valueType}\n`,
           this.correctValueType.name,
           session,
           account.id
         );
+
         return value;
     }
   }

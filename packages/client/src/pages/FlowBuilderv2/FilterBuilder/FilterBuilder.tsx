@@ -25,6 +25,7 @@ import {
   SegmentQueryStatement,
   StatementValueType,
   valueTypeToComparisonTypesMap,
+  valueTypeToAttributeType,
 } from "reducers/flow-builder.reducer";
 import {
   addSegmentQueryError as addSegmentSettingQueryError,
@@ -47,6 +48,10 @@ import { Workflow, EntityWithComputedFields } from "types/Workflow";
 import axios, { CancelTokenSource } from "axios";
 import deepCopy from "utils/deepCopy";
 import AutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
+import {
+  AttributeType,
+  AttributeParameter,
+} from "pages/PeopleSettings/PeopleSettings";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -302,6 +307,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
       isArray?: boolean;
     }[]
   >([]);
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
+    AttributeType[]
+  >([]);
+  const [possibleAttributeParameters, setPossibleAttributeParameters] =
+    useState<AttributeParameter[]>([]);
 
   const loadSegments = async () => {
     const {
@@ -341,7 +351,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     }
   };
 
-  const loadPossibleKeys = async (q: string) => {
+  const loadPossibleKeys = async (q?: string) => {
+    q ??= "";
+
     const { data } = await ApiService.get<
       {
         key: string;
@@ -353,6 +365,24 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
 
     setPossibleKeys(data);
+  };
+
+  const loadKeyTypes = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-types`,
+    });
+
+    setPossibleAttributeTypes(data);
+  };
+
+  const loadKeyParameters = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-parameters/`,
+    });
+
+    const nonSystemAttributes = data.filter((item) => !item.isSystem);
+
+    setPossibleAttributeParameters(nonSystemAttributes);
   };
 
   const loadPossibleJourneys = async () => {
@@ -380,7 +410,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   };
 
   useEffect(() => {
+    loadKeyTypes();
     loadPossibleKeys();
+    loadKeyParameters();
     loadSegments();
     loadPossibleJourneys();
   }, []);
@@ -1142,7 +1174,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         />
                       </>
                     )}
-                    {/* 
+
                     <div>
                       {statement.valueType === StatementValueType.ARRAY &&
                       [
@@ -1151,7 +1183,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         ComparisonType.ARRAY_LENGTH_LESS,
                       ].includes(statement.comparisonType) ? (
                         <FilterBuilderDynamicInput
-                          type={Attributety.NUMBER}
+                          type={valueTypeToAttributeType(
+                            StatementValueType.NUMBER,
+                            possibleAttributeTypes
+                          )}
                           value={statement.value}
                           onChange={(value) =>
                             +value >= 0 &&
@@ -1167,9 +1202,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         statement.comparisonType !==
                           ComparisonType.NOT_EXIST && (
                           <FilterBuilderDynamicInput
-                            type={
-                              statement.valueType || StatementValueType.STRING
-                            }
+                            type={valueTypeToAttributeType(
+                              statement.valueType || StatementValueType.STRING,
+                              possibleAttributeTypes
+                            )}
                             value={statement.value}
                             isRelativeDate={
                               statement.dateComparisonType ===
@@ -1185,16 +1221,19 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           />
                         )
                       )}
-                    </div> */}
+                    </div>
 
-                    {/* {(statement.valueType === StatementValueType.DATE ||
+                    {(statement.valueType === StatementValueType.DATE ||
                       statement.valueType === StatementValueType.DATE_TIME) &&
                       statement.comparisonType === ComparisonType.DURING && (
                         <>
                           -
                           <div>
                             <FilterBuilderDynamicInput
-                              type={StatementValueType.DATE}
+                              type={valueTypeToAttributeType(
+                                StatementValueType.DATE,
+                                possibleAttributeTypes
+                              )}
                               isRelativeDate={
                                 statement.dateComparisonType ===
                                 DateComparisonType.RELATIVE
@@ -1210,7 +1249,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             />
                           </div>
                         </>
-                      )} */}
+                      )}
                     {statement.comparisonType === ComparisonType.OBJECT_KEY && (
                       <div>
                         <select
@@ -1235,14 +1274,17 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         </select>
                       </div>
                     )}
-                    {/* {statement.comparisonType === ComparisonType.OBJECT_KEY &&
+                    {statement.comparisonType === ComparisonType.OBJECT_KEY &&
                       [
                         ObjectKeyComparisonType.KEY_VALUE_EQUAL_TO,
                         ObjectKeyComparisonType.KEY_VALUE_NOT_EQUAL_TO,
                       ].includes(statement.subComparisonType) && (
                         <div>
                           <FilterBuilderDynamicInput
-                            type={StatementValueType.STRING}
+                            type={valueTypeToAttributeType(
+                              StatementValueType.STRING,
+                              possibleAttributeTypes
+                            )}
                             value={statement.subComparisonValue}
                             onChange={(value) =>
                               handleChangeStatement(i, {
@@ -1253,7 +1295,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             dataTestId={`attribute-statement-${i}`}
                           />
                         </div>
-                      )} */}
+                      )}
                   </>
                 ) : statement.type === QueryStatementType.SEGMENT ? (
                   <div>
@@ -1419,8 +1461,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           ]}
                         />
 
-                        {/* <FilterBuilderDynamicInput
-                          type={StatementValueType.DATE}
+                        <FilterBuilderDynamicInput
+                          type={valueTypeToAttributeType(
+                            StatementValueType.DATE,
+                            possibleAttributeTypes
+                          )}
                           value={
                             (statement.time?.comparisonType ===
                             ComparisonType.BEFORE
@@ -1456,13 +1501,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             });
                           }}
                           dataTestId={`attribute-statement-${i}`}
-                        /> */}
-                        {/* {statement.time?.comparisonType ===
+                        />
+                        {statement.time?.comparisonType ===
                           ComparisonType.DURING && (
                           <>
                             -
                             <FilterBuilderDynamicInput
-                              type={StatementValueType.DATE}
+                              type={valueTypeToAttributeType(
+                                StatementValueType.DATE,
+                                possibleAttributeTypes
+                              )}
                               value={statement.time.timeBefore || ""}
                               isRelativeDate={
                                 statement.time.dateComparisonType ===
@@ -1484,7 +1532,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               dataTestId={`attribute-statement-${i}`}
                             />
                           </>
-                        )} */}
+                        )}
                         <div
                           className="cursor-pointer ml-auto"
                           onClick={() =>
@@ -1647,7 +1695,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                             ))}
                                           </select>
                                         </div>
-                                        {/* <div>
+                                        <div>
                                           {property.valueType ===
                                             StatementValueType.ARRAY &&
                                           [
@@ -1658,7 +1706,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                             property.comparisonType
                                           ) ? (
                                             <FilterBuilderDynamicInput
-                                              type={StatementValueType.NUMBER}
+                                              type={valueTypeToAttributeType(
+                                                StatementValueType.NUMBER,
+                                                possibleAttributeTypes
+                                              )}
                                               value={property.value}
                                               onChange={(value) =>
                                                 +value >= 0 &&
@@ -1679,7 +1730,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                             property.comparisonType !==
                                               ComparisonType.NOT_EXIST && (
                                               <FilterBuilderDynamicInput
-                                                type={property.valueType}
+                                                type={valueTypeToAttributeType(
+                                                  property.valueType,
+                                                  possibleAttributeTypes
+                                                )}
                                                 value={property.value}
                                                 onChange={(value) =>
                                                   handleChangeEventProperty(
@@ -1695,8 +1749,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                               />
                                             )
                                           )}
-                                        </div> */}
-                                        {/* {property.valueType ===
+                                        </div>
+                                        {property.valueType ===
                                           StatementValueType.DATE &&
                                           property.comparisonType ===
                                             ComparisonType.DURING && (
@@ -1704,7 +1758,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                               -
                                               <div>
                                                 <FilterBuilderDynamicInput
-                                                  type={StatementValueType.DATE}
+                                                  type={valueTypeToAttributeType(
+                                                    StatementValueType.DATE,
+                                                    possibleAttributeTypes
+                                                  )}
                                                   value={
                                                     property.subComparisonValue ||
                                                     ""
@@ -1724,7 +1781,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                 />
                                               </div>
                                             </>
-                                          )} */}
+                                          )}
                                         {property.comparisonType ===
                                           ComparisonType.OBJECT_KEY && (
                                           <div>
@@ -1757,7 +1814,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                             </select>
                                           </div>
                                         )}
-                                        {/* {property.comparisonType ===
+                                        {property.comparisonType ===
                                           ComparisonType.OBJECT_KEY &&
                                           [
                                             ObjectKeyComparisonType.KEY_VALUE_EQUAL_TO,
@@ -1767,7 +1824,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                           ) && (
                                             <div>
                                               <FilterBuilderDynamicInput
-                                                type={StatementValueType.STRING}
+                                                type={valueTypeToAttributeType(
+                                                  StatementValueType.STRING,
+                                                  possibleAttributeTypes
+                                                )}
                                                 value={
                                                   property.subComparisonValue
                                                 }
@@ -1784,7 +1844,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                 dataTestId={`attribute-statement-${i}`}
                                               />
                                             </div>
-                                          )} */}
+                                          )}
                                       </>
                                       <div
                                         className="cursor-pointer ml-auto"
@@ -2133,8 +2193,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           ]}
                         />
 
-                        {/* <FilterBuilderDynamicInput
-                          type={StatementValueType.DATE}
+                        <FilterBuilderDynamicInput
+                          type={valueTypeToAttributeType(
+                            StatementValueType.DATE,
+                            possibleAttributeTypes
+                          )}
                           isRelativeDate={
                             (statement as MessageEventQuery).time
                               ?.dateComparisonType ===
@@ -2175,13 +2238,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             } as MessageEventQuery);
                           }}
                           dataTestId={`attribute-statement-${i}`}
-                        /> */}
-                        {/* {(statement as MessageEventQuery).time
+                        />
+                        {(statement as MessageEventQuery).time
                           ?.comparisonType === ComparisonType.DURING && (
                           <>
                             -
                             <FilterBuilderDynamicInput
-                              type={StatementValueType.DATE}
+                              type={valueTypeToAttributeType(
+                                StatementValueType.DATE,
+                                possibleAttributeTypes
+                              )}
                               isRelativeDate={
                                 (statement as MessageEventQuery).time
                                   ?.dateComparisonType ===
@@ -2208,7 +2274,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               dataTestId={`attribute-statement-${i}`}
                             />
                           </>
-                        )} */}
+                        )}
                         <div
                           className="cursor-pointer ml-auto"
                           onClick={() =>

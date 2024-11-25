@@ -4,33 +4,50 @@ import {
   QuerySyntax,
   NodeInterface,
   ExpressionInterface,
-  ExpressionGroupInterface,
+  // ExpressionGroupInterface,
   AttributeNodeInterface,
   EventNodeInterface,
   ValueNodeInterface,
   Node,
-  QueryMatchType
+  // QueryMatchType,
+  PGFormatter,
+  LogicalExpressionInterface,
+  NodeFactory,
 } from "../";
 
 export class Query implements QueryBase {
-  elements: QueryElement[];
-  matching: QueryMatchType;
+  expression: LogicalExpressionInterface;
+  private nodeFactory = new NodeFactory();
 
   constructor() {
-    this.elements = [];
-    this.setMatchingToAny();
+    this.expression = this.nodeFactory.createLogicalExpression();
+  }
+
+  static fromJSON(jsonObj: Record<string, string>): Query {
+    return new Query();
   }
 
   setMatchingToAll() {
-    this.matching = QuerySyntax.MatchingTypeAll;
+    // this.elementList.setMatchingToAll();
+    this.nodeFactory.updateLogicalExpressionOperatorToAnd(this.expression);
   }
 
   setMatchingToAny() {
-    this.matching = QuerySyntax.MatchingTypeAny;
+    // this.elementList.setMatchingToAny();
+    this.nodeFactory.updateLogicalExpressionOperatorToOr(this.expression);
   }
 
-  add(element: QueryElement) {
-    this.elements.push(element);
+  add(element: ExpressionInterface) {
+    // this.expression.add(element);
+    this.nodeFactory.addExpressionToLogicalExpression(this.expression, element);
+  }
+
+  getExpressions(): ExpressionInterface[] {
+    return this.expression.expressions;
+  }
+
+  getOperator() {
+    return this.expression.operator;
   }
 
   toSQL(): string {
@@ -38,17 +55,19 @@ export class Query implements QueryBase {
     let result = "";
     let elementSQL = "";
 
-    const needsParens = this.elements.length > 1;
-    const matchType = this.matching == QuerySyntax.MatchingTypeAll ? 'AND' : 'OR';
+    const expressions = this.getExpressions();
 
-    for(let i = 0; i < this.elements.length; i++) {
-      elementSQL = formatter.process(this.elements[i]);
+    const needsParens = expressions.length > 1;
+    const operator = this.getOperator().toString();
+
+    for(let i = 0; i < expressions.length; i++) {
+      elementSQL = formatter.process(expressions[i]);
 
       if (needsParens)
         elementSQL = `(${elementSQL})`;
 
       if( i > 0 )
-        result += ` ${matchType} `;
+        result += ` ${operator} `;
 
       result += elementSQL;
     }
@@ -57,103 +76,3 @@ export class Query implements QueryBase {
   }
 }
 
-export class QueryFormatterBase {
-  // process(express)
-}
-
-export class PGFormatter extends QueryFormatterBase {
-  process(node: NodeInterface) {
-    return this.processNode(node);
-  }
-
-  processAttributeExpression(expression: ExpressionInterface) {
-    const lhs = this.processNode(expression.left);
-    const rhs = this.processNode(expression.right);
-    const operatorString = expression.operator.toString();
-
-    const result = `${lhs} ${operatorString} ${rhs}`;
-
-    return result;
-  }
-
-  processEventExpression(expression: ExpressionInterface) {
-    const lhs = this.processNode(expression.left);
-    const rhs = this.processNode(expression.right);
-    const operatorString = expression.operator.toString();
-
-    const result = `${lhs} ${operatorString} ${rhs}`;
-
-    switch(expression.operator) {
-      case QuerySyntax.HasPerformedKeyword:
-        // return this.processAttributeNode(node as AttributeNodeInterface);
-      case QuerySyntax.HasNotPerformedKeyword:
-        // return this.processEventNode(node as EventNodeInterface);
-    }
-
-    return result;
-  }
-
-  private processAttributeNode(node: AttributeNodeInterface) {
-    let attribute = node.attribute.toString();
-
-    if (node.prefix && node.prefix.length > 0)
-      attribute = `${node.prefix.toString()}->>${attribute}`;
-
-    return attribute;
-  }
-
-  private processEventNode(node: EventNodeInterface) {
-    let event = node.event.toString();
-
-    return event;
-  }
-
-  private processValueNode(node: ValueNodeInterface) {
-    return node.value.toString();
-  }
-
-  private processExpressionGroupNode(node: ExpressionGroupInterface) {
-    const formatter = new PGFormatter();
-    let result = "";
-    let elementSQL = "";
-
-    const needsParens = node.elements.length > 1;
-    const matchType = node.matching == QuerySyntax.MatchingTypeAll ? 'AND' : 'OR';
-
-    for(let i = 0; i < node.elements.length; i++) {
-      elementSQL = formatter.process(node.elements[i]);
-
-      if (needsParens)
-        elementSQL = `(${elementSQL})`;
-
-      if( i > 0 )
-        result += ` ${matchType} `;
-
-      result += elementSQL;
-    }
-
-    return result;
-  }
-
-  private processNode(node: NodeInterface) {
-    switch(node.kind) {
-      case QuerySyntax.AttributeNode:
-        return this.processAttributeNode(node as AttributeNodeInterface);
-      case QuerySyntax.EventNode:
-        return this.processEventNode(node as EventNodeInterface);
-      case QuerySyntax.ValueNode:
-        return this.processValueNode(node as ValueNodeInterface);
-      case QuerySyntax.ExpressionGroup:
-        return this.processExpressionGroupNode(node as ExpressionGroupInterface);
-      case QuerySyntax.AttributeExpression:
-        return this.processAttributeExpression(node as ExpressionInterface);
-      case QuerySyntax.EventExpression:
-        return this.processEventExpression(node as ExpressionInterface);
-      case QuerySyntax.EmailExpression:
-      case QuerySyntax.MessageExpression:
-      case QuerySyntax.SMSExpression:
-      case QuerySyntax.PushExpression:
-        return;
-    }
-  }
-}

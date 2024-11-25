@@ -15,12 +15,14 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { StepsModule } from '../steps/steps.module';
 import { StepsHelper } from '../steps/steps.helper';
 import { Customer } from '../customers/entities/customer.entity';
+import { QueryService } from '../../common/services/query';
 
 function getProvidersList() {
   let providerList: Array<any> = [
     SegmentsService,
     StepsHelper,
     SegmentCustomersService,
+    QueryService,
   ];
 
   if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'QUEUE') {

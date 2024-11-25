@@ -53,9 +53,14 @@ export enum QuerySyntax {
   MatchingTypeAll                   = 'MatchingTypeAll',
   MatchingTypeAny                   = 'MatchingTypeAny',
 
-  Expression                        = 'Expression',
-  ExpressionGroup                   = 'ExpressionGroup',
+  Node                              = 'Node',
+  NodeList                          = 'NodeList',
+
+  UnaryExpression                   = 'UnaryExpression',
   BinaryExpression                  = 'BinaryExpression',
+  TernaryExpression                 = 'TernaryExpression',
+  LogicalExpression                 = 'LogicalExpression',
+  MultiaryExpression                = 'MultiaryExpression',
 
   AttributeExpression               = 'AttributeExpression',
   EventExpression                   = 'EventExpression',
@@ -69,6 +74,12 @@ export enum QuerySyntax {
   EventNode                         = 'EventNode',
   ValueNode                         = 'ValueNode',
 }
+
+// export NodeKind =
+//   | QuerySyntax.Node
+//   | QuerySyntax.NodeList
+//   | ExpressionKind
+//   | ddd;
 
 export type OperatorKind =
   | QuerySyntax.AndKeyword
@@ -102,17 +113,26 @@ export type EventOperatorKind =
   | QuerySyntax.HasNotPerformedKeyword;
 
 export type ExpressionKind = 
-  | QuerySyntax.AttributeExpression
-  | QuerySyntax.EventExpression
-  | QuerySyntax.EmailExpression
-  | QuerySyntax.MessageExpression
-  | QuerySyntax.SMSExpression
-  | QuerySyntax.PushExpression
-  | QuerySyntax.SegmentExpression;
+  | QuerySyntax.UnaryExpression
+  | QuerySyntax.BinaryExpression
+  | QuerySyntax.TernaryExpression
+  | QuerySyntax.LogicalExpression
+  | QuerySyntax.MultiaryExpression;
+  // | QuerySyntax.AttributeExpression
+  // | QuerySyntax.EventExpression
+  // | QuerySyntax.EmailExpression
+  // | QuerySyntax.MessageExpression
+  // | QuerySyntax.SMSExpression
+  // | QuerySyntax.PushExpression
+  // | QuerySyntax.SegmentExpression;
 
-export type QueryMatchType = 
-  | QuerySyntax.MatchingTypeAll
-  | QuerySyntax.MatchingTypeAny;
+export type LogicalExpressionKind = 
+  | QuerySyntax.AndKeyword
+  | QuerySyntax.OrKeyword;
+
+export type NodeListOperatorKind = 
+  | QuerySyntax.AndKeyword
+  | QuerySyntax.OrKeyword;
 
 export interface NodeInterface {
   readonly kind: QuerySyntax;
@@ -122,25 +142,61 @@ export interface NodeInterface {
 export interface ExpressionInterface extends NodeInterface {
   kind: ExpressionKind;
   operator: OperatorKind;
+}
+
+// export interface NodeListInterface extends NodeInterface {
+//   kind: QuerySyntax.NodeList;
+//   nodes: NodeInterface[];
+//   operator: NodeListOperatorKind;
+
+//   add(node: NodeInterface);
+//   setMatchingToAll();
+//   setMatchingToAny();
+//   getLength(): number;
+// }
+
+export interface UnaryExpressionInterface extends ExpressionInterface {
+  kind: QuerySyntax.UnaryExpression;
+  left: NodeInterface;
+}
+
+export interface BinaryExpressionInterface extends ExpressionInterface {
+  kind: QuerySyntax.BinaryExpression;
   left: NodeInterface;
   right: NodeInterface;
 }
 
-export interface ExpressionGroupInterface extends NodeInterface {
-  kind: QuerySyntax.ExpressionGroup;
-  elements: ExpressionInterface[];
-  matching: QueryMatchType;
-
-  add(expression: ExpressionInterface[]);
+export interface TernaryExpressionInterface {
+  kind: QuerySyntax.TernaryExpression;
+  left: NodeInterface;
+  middle: NodeInterface;
+  right: NodeInterface;
 }
 
-export interface EventExpressionInterface extends ExpressionInterface {
-  kind: QuerySyntax.EventExpression;
-  operator: EventOperatorKind;
-  event: string;
-  attributeExpressions?: ExpressionInterface[]
+export interface LogicalExpressionInterface {
+  kind: QuerySyntax.LogicalExpression;
+  operator: LogicalExpressionKind;
+  expressions: ExpressionInterface[];
+
+  add(node: ExpressionInterface);
+  getLength(): number;
+  setMatchingToAll();
+  setMatchingToAny();
 }
 
+// export interface MultiaryExpressionInterface {
+//   kind: QuerySyntax.MultiaryExpression;
+//   expressions: ExpressionInterface[];
+// }
+
+// export interface EventExpressionInterface extends ExpressionInterface {
+//   kind: QuerySyntax.EventExpression;
+//   operator: EventOperatorKind;
+//   event: string;
+//   attributeExpressions?: ExpressionInterface[]
+// }
+
+// Nodes for variables
 export interface AttributeNodeInterface extends NodeInterface {
   kind: QuerySyntax.AttributeNode;
   attribute: string;
@@ -158,35 +214,23 @@ export interface ValueNodeInterface extends NodeInterface {
   value: any;
 }
 
-// export interface BinaryExpressionInterface extends ExpressionInterface {
-//   kind: QuerySyntax.BinaryExpression;
-//   left: ExpressionInterface;
-//   right: ExpressionInterface;
-//   operator: OperatorKind;
-// }
-
-export type QueryElement = 
-  | ExpressionInterface
-  | ExpressionGroupInterface;
-
 export interface QueryBase {
-  elements: readonly QueryElement[];
-  matching: QueryMatchType;
-
-  add(element: QueryElement);
-
+  expression: LogicalExpressionInterface;
   toSQL(): string;
 }
 
-// export interface AttributeExpression extends ExpressionInterface {
-//   kind: QuerySyntax.AttributeExpression;
-// }
+export type QueryConversionAllowedInputType = 
+  | Record<string, string>;
 
-// export interface EventExpression extends ExpressionInterface {
-//   kind: QuerySyntax.EventExpression;
-// }
+export type SimpleNodeType = 
+  | AttributeNodeInterface
+  | EventNodeInterface
+  | ValueNodeInterface;
 
-// export interface MessageExpression extends ExpressionInterface {
-//   kind: QuerySyntax.MessageExpression;
-// }
+export type ProcessableNodeType = 
+  | ExpressionKind
+  | ExpressionInterface
+  // | ExpressionGroupInterface
+  | SimpleNodeType;
 
+export type QueryElement = ProcessableNodeType;

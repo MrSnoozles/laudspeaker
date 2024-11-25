@@ -1,9 +1,8 @@
 import {
   NodeInterface,
-  ExpressionInterface,
+  // NodeListInterface,
   QuerySyntax,
-  OperatorKind,
-  ExpressionKind
+  // QueryMatchType,
 } from "../";
 
 export class Node<T extends QuerySyntax> implements NodeInterface {
@@ -16,20 +15,34 @@ export class Node<T extends QuerySyntax> implements NodeInterface {
   }
 }
 
-// export class Expression<T extends QuerySyntax> extends Node<T> implements ExpressionInterface {
-//   operator: OperatorKind;
-//   left: ExpressionInterface;
-//   right: ExpressionInterface;
+// export class NodeList extends Node<QuerySyntax.NodeList> implements NodeListInterface {
+//   public nodes: NodeInterface[];
+//   public operator: QueryMatchType;
 
-//   constructor(kind: T, operator: OperatorKind, parent?: NodeInterface) {
-//     super(kind, parent);
+//   constructor() {
+//     super(QuerySyntax.NodeList);
 
-//     this.operator = operator;
+//     this.expressions = [];
+//     this.setMatchingToAny();
 //   }
-// }
 
-// export class AttributeExpression<T extends QuerySyntax.AttributeExpression> extends Expression<T> {
-//   constructor(kind: T, operator: OperatorKind, parent?: NodeInterface) {
-//     super(kind, operator, parent);
+//   add(node: NodeInterface) {
+//     this.expressions.push(node);
+//   }
+  
+//   setMatchingToAll() {
+//     this.matchType = QuerySyntax.MatchingTypeAll;
+//   }
+
+//   setMatchingToAny() {
+//     this.matchType = QuerySyntax.MatchingTypeAny;
+//   }
+
+//   getLength(): number {
+//     return this.expressions.length;
+//   }
+
+//   getMatchType(): QueryMatchType {
+//     return this.matchType;
 //   }
 // }
