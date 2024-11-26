@@ -107,7 +107,7 @@ const myFormat = winston.format.printf(function ({
 }) {
   let ctx: any = {};
   try {
-    ctx = JSON.parse(context);
+    ctx = JSON.parse(context as string);
   } catch (e) {}
   return `[${timestamp}] [${level}] [${process.env.LAUDSPEAKER_PROCESS_TYPE}-${
     process.pid

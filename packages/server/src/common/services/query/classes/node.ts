@@ -1,17 +1,18 @@
 import {
   NodeInterface,
-  // NodeListInterface,
+  NodeFlags,
   QuerySyntax,
-  // QueryMatchType,
 } from "../";
 
 export class Node<T extends QuerySyntax> implements NodeInterface {
   public kind: T;
   public parent: NodeInterface;
+  public flags: NodeFlags;
 
-  constructor(kind: T, parent?: NodeInterface) {
+  constructor(kind: T) {
     this.kind = kind;
     this.parent = undefined!;
+    this.flags = NodeFlags.None;
   }
 }
 
@@ -29,7 +30,7 @@ export class Node<T extends QuerySyntax> implements NodeInterface {
 //   add(node: NodeInterface) {
 //     this.expressions.push(node);
 //   }
-  
+
 //   setMatchingToAll() {
 //     this.matchType = QuerySyntax.MatchingTypeAll;
 //   }

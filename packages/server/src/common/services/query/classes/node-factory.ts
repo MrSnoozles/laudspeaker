@@ -2,6 +2,7 @@ import {
   QueryElement,
   QueryBase,
   QuerySyntax,
+  QueryAttributeType,
   NodeInterface,
   ExpressionInterface,
   AttributeNodeInterface,
@@ -18,7 +19,6 @@ import {
 } from "../";
 
 export class NodeFactory {
-
   createBaseNode<T extends NodeInterface>(kind: T["kind"]) {
     const node = new Node(kind);
     return node as T;
@@ -35,21 +35,6 @@ export class NodeFactory {
 
     return node;
   }
-
-  // createBinaryExpression(
-  //   attribute: string,
-  //   operator: OperatorKind,
-  //   value: any,
-  //   parent?: NodeInterface) {
-
-  //   const exp = this.createAttributeExpressionNode(
-  //     attribute,
-  //     operator,
-  //     value,
-  //     parent);
-
-  //   return exp;
-  // }
 
   createTernaryExpression() {
     const node = this.createBaseNode<TernaryExpressionInterface>(QuerySyntax.TernaryExpression);
@@ -84,16 +69,27 @@ export class NodeFactory {
   createAttributeExpressionNode(
     attribute: string,
     operator: OperatorKind,
+    type: QueryAttributeType,
     value: any,
     parent?: NodeInterface) {
 
-    const node = this.createBinaryExpression();
-    const nodeLHS = this.createAttributeNode(attribute);
-    const nodeRHS = this.createValueNode(value);
+    let node;
+    let nodeLHS;
+    let nodeRHS;
+
+    if (operator == QuerySyntax.ExistKeyword || operator == QuerySyntax.DoesNotExistKeyword) {
+      node = this.createUnaryExpression();
+    }
+    else {
+      node = this.createBinaryExpression(); 
+    }
 
     node.operator = operator;
-    node.left = nodeLHS;
-    node.right = nodeRHS;
+    node.left = this.createAttributeNode(attribute, type);
+    
+    if (node.kind == QuerySyntax.BinaryExpression) {
+      node.right = this.createValueNode(value, type);
+    }
 
     return node;
   }
@@ -116,10 +112,11 @@ export class NodeFactory {
     return node;
   }
 
-  createAttributeNode(attribute: string) {
+  createAttributeNode(attribute: string, type: QueryAttributeType) {
     const node = this.createBaseNode<AttributeNodeInterface>(QuerySyntax.AttributeNode);
     node.attribute = attribute;
-    node.prefix = "payload";
+    node.prefix = "user_attributes";
+    node.type = type;
     
     return node;
   }
@@ -132,19 +129,12 @@ export class NodeFactory {
     return node;
   }
 
-  createValueNode(value: any) {
+  createValueNode(value: any, type?: QueryAttributeType) {
     const node = this.createBaseNode<ValueNodeInterface>(QuerySyntax.ValueNode);
     node.value = value;
+    node.type = type;
 
     return node;
   }
-
-
-
-
-  // BinaryExpressionForCustomerPayload
-  // BinaryExpressionForEvents;
-
-  // events.attributes('credit_score')
 }
 

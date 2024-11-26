@@ -1,10 +1,24 @@
 export enum QuerySyntax {
+  StringKeyword                     = 'String',
+  NumberKeyword                     = 'Number',
+  BooleanKeyword                    = 'Boolean',
+  EmailKeyword                      = 'Email',
+  DateKeyword                       = 'Date',
+  DateTimeKeyword                   = 'DateTime',
+  ArrayKeyword                      = 'Array',
+  ObjectKeyword                     = 'Object',
+
   AndKeyword                        = 'AND',
   OrKeyword                         = 'OR',
   NotKeyword                        = 'NOT',
   TrueKeyword                       = 'TRUE',
   FalseKeyword                      = 'FALSE',
   NullKeyword                       = 'NULL',
+
+  ExistKeyword                      = 'EXISTS',
+  DoesNotExistKeyword               = 'NOT EXISTS',
+  ContainKeyword                    = 'Contain',
+  DoesNotContainKeyword             = 'Not Contain',
    
   IsKeyword                         = 'IS',
   InKeyword                         = 'IN',
@@ -75,16 +89,14 @@ export enum QuerySyntax {
   ValueNode                         = 'ValueNode',
 }
 
-// export NodeKind =
-//   | QuerySyntax.Node
-//   | QuerySyntax.NodeList
-//   | ExpressionKind
-//   | ddd;
-
 export type OperatorKind =
   | QuerySyntax.AndKeyword
   | QuerySyntax.OrKeyword
   | QuerySyntax.NotKeyword
+  | QuerySyntax.ExistKeyword
+  | QuerySyntax.DoesNotExistKeyword
+  | QuerySyntax.ContainKeyword
+  | QuerySyntax.DoesNotContainKeyword
   | QuerySyntax.IsKeyword
   | QuerySyntax.InKeyword
   | QuerySyntax.LikeKeyword
@@ -112,6 +124,10 @@ export type EventOperatorKind =
   | QuerySyntax.HasPerformedKeyword
   | QuerySyntax.HasNotPerformedKeyword;
 
+export type UnaryOperatorKind = 
+  | QuerySyntax.ExistKeyword
+  | QuerySyntax.DoesNotExistKeyword;
+
 export type ExpressionKind = 
   | QuerySyntax.UnaryExpression
   | QuerySyntax.BinaryExpression
@@ -134,9 +150,26 @@ export type NodeListOperatorKind =
   | QuerySyntax.AndKeyword
   | QuerySyntax.OrKeyword;
 
+export type QueryAttributeType =
+  | QuerySyntax.StringKeyword
+  | QuerySyntax.NumberKeyword
+  | QuerySyntax.BooleanKeyword
+  | QuerySyntax.EmailKeyword
+  | QuerySyntax.DateKeyword
+  | QuerySyntax.DateTimeKeyword
+  | QuerySyntax.ArrayKeyword
+  | QuerySyntax.ObjectKeyword;
+
+export const enum NodeFlags {
+  None                      = 0,
+  AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
+  UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
+}
+
 export interface NodeInterface {
   readonly kind: QuerySyntax;
   readonly parent?: NodeInterface;
+  readonly flags: NodeFlags;
 }
 
 export interface ExpressionInterface extends NodeInterface {
@@ -157,6 +190,7 @@ export interface ExpressionInterface extends NodeInterface {
 
 export interface UnaryExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.UnaryExpression;
+  operator: UnaryOperatorKind;
   left: NodeInterface;
 }
 
@@ -166,14 +200,14 @@ export interface BinaryExpressionInterface extends ExpressionInterface {
   right: NodeInterface;
 }
 
-export interface TernaryExpressionInterface {
+export interface TernaryExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.TernaryExpression;
   left: NodeInterface;
   middle: NodeInterface;
   right: NodeInterface;
 }
 
-export interface LogicalExpressionInterface {
+export interface LogicalExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.LogicalExpression;
   operator: LogicalExpressionKind;
   expressions: ExpressionInterface[];
@@ -201,6 +235,7 @@ export interface AttributeNodeInterface extends NodeInterface {
   kind: QuerySyntax.AttributeNode;
   attribute: string;
   prefix?: string;
+  type: QueryAttributeType;
 }
 
 export interface EventNodeInterface extends NodeInterface {
@@ -212,6 +247,7 @@ export interface EventNodeInterface extends NodeInterface {
 export interface ValueNodeInterface extends NodeInterface {
   kind: QuerySyntax.ValueNode;
   value: any;
+  type: QueryAttributeType;
 }
 
 export interface QueryBase {
@@ -230,7 +266,8 @@ export type SimpleNodeType =
 export type ProcessableNodeType = 
   | ExpressionKind
   | ExpressionInterface
-  // | ExpressionGroupInterface
   | SimpleNodeType;
 
 export type QueryElement = ProcessableNodeType;
+
+ 

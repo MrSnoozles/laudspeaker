@@ -15,5 +15,4 @@ export class QueryService extends BaseLaudspeakerService {
 
     return query;
   }
-
 }

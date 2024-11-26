@@ -8,6 +8,7 @@ import {
   BinaryExpressionInterface,
   LogicalExpressionInterface,
   OperatorKind,
+  QueryAttributeType,
 } from "../../";
 
 export class JSONConverter extends QueryConverterBase {
@@ -54,11 +55,14 @@ export class JSONConverter extends QueryConverterBase {
 
   toBinaryExpression(statement: any) {
     const operator = this.getOperatorKindFromString(statement.comparisonType);
+    const attributeType = this.getAttributeTypeFromString(statement.valueType);
+
     switch(statement.type) {
       case "Attribute":
         return this.nodeFactory.createAttributeExpressionNode(
           statement.key,
           operator,
+          attributeType,
           statement.value
         );
       case "Event":
@@ -74,6 +78,57 @@ export class JSONConverter extends QueryConverterBase {
     switch(operatorStr) {
       case "is equal to":
         return QuerySyntax.EqualsToken;
+      case 'is not equal to':
+        return QuerySyntax.LessThanGreaterThanToken;
+      case 'during':
+        return QuerySyntax.BetweenKeyword;
+      // case 'length is greater than':
+      //   return QuerySyntax.EqualsToken;
+      // case 'length is less than':
+      //   return QuerySyntax.EqualsToken;
+      // case 'length is equal to':
+      //   return QuerySyntax.EqualsToken;
+      case 'exist':
+        return QuerySyntax.ExistKeyword;
+      case 'not exist':
+        return QuerySyntax.DoesNotExistKeyword;
+      case 'is greater than':
+        return QuerySyntax.GreaterThanToken;
+      case 'is less than':
+        return QuerySyntax.LessThanToken;
+      case 'contains':
+        return QuerySyntax.ContainKeyword;
+      case 'does not contain':
+        return QuerySyntax.DoesNotContainKeyword;
+      case 'after':
+        return QuerySyntax.GreaterThanToken;
+      case 'before':
+        return QuerySyntax.LessThanToken;
+      default:
+        throw new Error("OperatorKind error");
+    }
+  }
+
+  getAttributeTypeFromString(typeStr: string): QueryAttributeType {
+    switch(typeStr) {
+      case 'String':
+        return QuerySyntax.StringKeyword;
+      case 'Number':
+        return QuerySyntax.NumberKeyword;
+      case 'Boolean':
+        return QuerySyntax.BooleanKeyword;
+      case 'Email':
+        return QuerySyntax.EmailKeyword;
+      case 'Date':
+        return QuerySyntax.DateKeyword;
+      case 'DateTime':
+        return QuerySyntax.DateTimeKeyword;
+      case 'Array':
+        return QuerySyntax.ArrayKeyword;
+      case 'Object':
+        return QuerySyntax.ObjectKeyword;
+      default:
+        return QuerySyntax.StringKeyword;
     }
   }
 
