@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 debian:latest
+FROM debian:latest
 
 # GET MONGOSH
 WORKDIR /root
